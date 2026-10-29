@@ -91,6 +91,14 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
 .impact-sec{margin-bottom:14px}.impact-grid{display:grid;grid-template-columns:minmax(0,1.76fr) minmax(280px,1fr);gap:4px}.impact-side{padding:16px 19px}
 @media(max-width:900px){.impact-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.fc-grid{grid-template-columns:1fr}.ctrl input{width:64px}}
+.brief{margin:0 0 14px}.brief .panel-header{align-items:center}.brief-wrap{padding:14px 19px 16px}
+.brief-head{font-size:16px;font-weight:750;line-height:1.5;padding:10px 14px;border-radius:7px;border:1px solid #2c4c61;background:#10293e;margin-bottom:10px}
+.brief-head.warn{border-color:#75593d;background:#2a241c;color:#f6dcae}.brief-head.crit{border-color:#8a4636;background:#2e1d1f;color:#ffd0c0}.brief-head.done{border-color:#2f6d5c;background:#12332e}
+.brief ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:12.5px;line-height:1.65;color:#cfe3ec}.brief li b{color:#e9f4f8}
+.brief-foot{margin-top:10px;font-size:10px;color:#6f94a9}
+.news-item{display:block;padding:8px 10px;border:1px solid #23435a;border-radius:6px;margin-bottom:6px;text-decoration:none;background:#0d2536}.news-item:hover{border-color:#3a778b}
+.news-item b{display:block;font-size:11px;color:#d6ecf4;font-weight:650}.news-item small{display:block;font-size:9.5px;color:#7d9cae;margin-top:3px}.news-item.off{border-color:#75593d;background:#2a241c}
+#newsList{max-height:320px;overflow:auto}
 
 @media(max-width:1200px){.screen{grid-template-columns:76px minmax(0,1fr)}.side{padding:25px 10px}.sidebrand{padding:0 8px 15px}.sidebrand .brandtext,.snav-title,.side-bottom,.nav-item span,.nav-count{display:none}.nav-item{justify-content:center;padding:12px 9px}.nav-item .icon{width:20px;height:20px}.main{padding:0 21px 24px}}
 @media(max-width:900px){.dashboard-grid,.section2{grid-template-columns:1fr}.assetpanel{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto}.assetimg{height:300px}.lower{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
@@ -115,6 +123,7 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
 <main class="main" id="overview">
 <header class="topbar"><div class="crumb">SPACE OPERATIONS <span class="slash">/</span> <b>NAPA-1 N MONITOR</b></div><div class="topmeta"><small>THAILAND · ICT (UTC+7)</small><span class="topchip" id="liveChip"><span class="dot"></span> STARTING…</span></div></header>
 <section class="heading"><div><div class="eyebrow">ORBITAL SURVEILLANCE SYSTEM / LIVE v1.0</div><h1>NAPA-1 N <span>Re-entry Monitoring &amp; Analysis</span></h1><p>ระบบเฝ้าติดตามการลดระดับวงโคจร วิเคราะห์แนวโน้ม และประเมินการกลับเข้าสู่ชั้นบรรยากาศ</p></div><div class="missionbadge"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="m7 7 2 2m6 6 2 2M2 4l6-2 3 6-6 2-3-6Zm14 12 6-2 3 6-6 2-3-6Z"/></svg><div><b>SATELLITE ASSET</b><small id="badgeId">NORAD 46320 · 2020-061BA</small></div></div></section>
+<section class="brief panel" id="brief"><div class="panel-header"><div><div class="panel-kicker">สรุปสถานการณ์ · SHORT BRIEF</div><div class="panel-title">อ่านสั้นๆ สำหรับทุกคน</div></div><button class="btn" id="btnCopyBrief" type="button">คัดลอกข้อความส่ง LINE</button></div><div class="brief-wrap" id="briefBody"><p>กำลังคำนวณ…</p></div></section>
 <section class="metrics">
  <article class="metric"><div class="metric-top">PERIGEE <em>01</em></div><div class="metric-val" id="mPer">— <span class="metric-unit">km</span></div><div class="metric-foot">Latest element set (mean)</div></article>
  <article class="metric"><div class="metric-top">APOGEE <em>02</em></div><div class="metric-val" id="mApo">— <span class="metric-unit">km</span></div><div class="metric-foot">Latest element set (mean)</div></article>
@@ -188,7 +197,7 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
   <div class="srcs"><a href="https://celestrak.org/satcat/table-satcat.php?CATNR=46320" target="_blank" rel="noopener">CelesTrak SATCAT ↗</a><a href="https://www.space-track.org/#/tip" target="_blank" rel="noopener">Space-Track TIP ↗</a><a href="https://aerospace.org/reentries" target="_blank" rel="noopener">Aerospace reentries ↗</a><a href="https://db.satnogs.org/satellite/46320" target="_blank" rel="noopener">SatNOGS ↗</a><a href="https://www.n2yo.com/satellite/?s=46320" target="_blank" rel="noopener">N2YO ↗</a></div>
  </div></article>
  <article class="panel" id="events"><div class="panel-header"><div><div class="panel-kicker">08 / MISSION STATUS</div><div class="panel-title">System Events</div></div><div class="tag">ACTIVITY LOG</div></div><div class="lower-content">
- <div id="eventList"></div>
+ <div class="panel-kicker" style="margin:2px 0 8px">ข่าว / การกล่าวถึง / ประกาศทางการ <span id="newsUpd" style="color:#5f8399;font-weight:500"></span></div><div id="newsList"></div><div class="panel-kicker" style="margin:12px 0 8px">SYSTEM LOG</div><div id="eventList"></div>
  </div></article>
 </section>
 <footer class="bottom-strip"><span>NAPA-1 RE-ENTRY MONITOR v1.0 · RTAF SPACE OPERATIONS · DATA: CELESTRAK / SATNOGS / NOAA SWPC</span><span><b>IMPORTANT:</b> Forecast is an engineering estimate — confirm with official TIP / decay messages</span></footer>
@@ -648,7 +657,8 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
   const stat = { ok: false, count: 0, apsis: 0, status: null };
   async function loadStatic() {
     const get = async p => { try { const r = await fetch(p + '?t=' + Date.now(), { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
-    const [tle, aps, wx, status] = await Promise.all([get('data/tle.json'), get('data/apsis.json'), get('data/wx.json'), get('data/status.json')]);
+    const [tle, aps, wx, status, runlog, news, official] = await Promise.all([get('data/tle.json'), get('data/apsis.json'), get('data/wx.json'), get('data/status.json'), get('data/runlog.json'), get('data/news.json'), get('data/official.json')]);
+    stat.runlog = Array.isArray(runlog) ? runlog : null; stat.news = news; stat.official = official;
     if (!tle && !aps && !wx) return;
     stat.ok = true; stat.status = status;
     if (status && status.decay_date && !st.decayed) { st.decayed = status.decay_date; log('SATCAT: DECAY_DATE ' + status.decay_date, 'จากไฟล์ข้อมูลที่อัปเดตอัตโนมัติ', 'crit'); }
@@ -664,7 +674,76 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
       if (latest && (!st.el || latest.epoch > st.el.epoch + 60000)) { setElement(latest, 'Auto-updated data'); st.live = true; setChip(); }
       else if (added) log('Data files · ' + added + ' new epoch(s)', 'data/tle.json', 'ok');
     }
-    renderArchive(); runForecast(); renderShared();
+    renderArchive(); runForecast(); renderShared(); renderNews();
+  }
+
+
+  /* ---------- Plain-language brief (for non-specialists) ---------- */
+  const thDate = ms => new Date(ms).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' }) + ' น.';
+  const thDay = ms => new Date(ms).toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Bangkok' });
+  const partOfDay = ms => { const h = +new Date(ms).toLocaleString('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' }); return h < 6 ? 'ช่วงเช้ามืด' : h < 12 ? 'ช่วงเช้า' : h < 18 ? 'ช่วงบ่าย' : 'ช่วงค่ำ'; };
+  function buildHist(el, exclude) {
+    const out = []; for (const h of getHist().filter(h => h.epoch > el.epoch - 7 * 864e5 && h.epoch <= el.epoch && !(h.l1 && exclude.has(h.l1.substr(18, 14))))) { if (!out.length || h.a <= out[out.length - 1].a + 0.3) out.push(h); }
+    return out;
+  }
+  // forecast as it stood before the newest run's element sets arrived
+  function previousForecast() {
+    const rl = stat.runlog; if (!rl || !rl.length || !st.fc || st.fc.error) return null;
+    const last = rl[rl.length - 1], ex = new Set(last.new || []);
+    if (!ex.size) return { same: true, run: last };
+    const prevEls = getHist().filter(h => h.l1 && !ex.has(h.l1.substr(18, 14)));
+    if (!prevEls.length) return null;
+    const p = prevEls[prevEls.length - 1], el = E.parseTLE(p.l1, p.l2, 'NAPA-1'), hist = buildHist(el, ex);
+    const method = hist.length >= 3 && (hist[hist.length - 1].epoch - hist[0].epoch) > 1.5 * 864e5 ? 'history' : 'ndot';
+    const fc = E.forecast(el, { f107: st.wx.f107, f81: st.wx.f81, kp: st.wx.kp, method, hist, TinfAt, runs: 300, stopAlt: 120 });
+    return fc.error ? null : { eta: fc.eta, run: last, n: ex.size };
+  }
+  function briefData() {
+    const el = st.el, fc = st.fc; if (!el || !fc || fc.error) return null;
+    const now = Date.now(), dLeft = (fc.eta - now) / 864e5, h = getHist();
+    const dayAgo = h.filter(x => x.epoch <= el.epoch - 0.8 * 864e5).pop();
+    const drop24 = dayAgo ? (dayAgo.a - el.a) / ((el.epoch - dayAgo.epoch) / 864e5) : null;
+    const prev = previousForecast(), off = stat.official || {}, imp = st.impact || {};
+    return { el, fc, now, dLeft, drop24, prev, off, imp, alt: (el.perigee + el.apogee) / 2, kp: st.wx.kp };
+  }
+  function renderBrief() {
+    const box = $('briefBody'); if (!box) return;
+    const b = briefData(); if (!b) { box.innerHTML = '<p>กำลังคำนวณ…</p>'; return; }
+    const { fc, dLeft, prev, off, imp } = b, lines = [];
+    let head, lvl;
+    if (st.decayed) { head = `NAPA-1 กลับเข้าสู่ชั้นบรรยากาศแล้ว (ยืนยันทางการ ${esc(st.decayed)})`; lvl = 'done'; }
+    else { head = `NAPA-1 คาดว่าจะตกสู่ชั้นบรรยากาศ <b>${thDay(fc.eta)} ${partOfDay(fc.eta)}</b> (อีกประมาณ ${Math.max(0, dLeft).toFixed(1)} วัน)`; lvl = dLeft < 1 ? 'crit' : dLeft < 3 ? 'warn' : 'info'; }
+    lines.push(`<li><b>เวลาที่น่าจะเป็น:</b> ${thDate(fc.eta)} · อาจคลาดได้ตั้งแต่ ${thDate(fc.win[0])} ถึง ${thDate(fc.win[2])}</li>`);
+    lines.push(`<li><b>ตอนนี้:</b> สูงจากพื้นโลกประมาณ ${b.alt.toFixed(0)} km ${b.drop24 ? `ลดลงวันละประมาณ ${b.drop24.toFixed(1)} km` : ''} (ยิ่งต่ำยิ่งลดเร็วขึ้น) ข้อมูลวงโคจรล่าสุดเมื่อ ${thDate(b.el.epoch)}</li>`);
+    if (prev && prev.run) {
+      const rt = thDate(Date.parse(prev.run.t));
+      if (prev.same) lines.push(`<li><b>รอบอัปเดตล่าสุด (${rt}):</b> ยังไม่มีข้อมูลวงโคจรชุดใหม่ ค่าพยากรณ์คงเดิม</li>`);
+      else { const sh = (fc.eta - prev.eta) / 36e5; lines.push(`<li><b>รอบอัปเดตล่าสุด (${rt}):</b> ได้ข้อมูลวงโคจรใหม่ ${prev.n} ชุด → เวลาตก${Math.abs(sh) < 1 ? 'แทบไม่เปลี่ยน' : sh < 0 ? `เร็วขึ้น ${(-sh).toFixed(0)} ชม.` : `ช้าลง ${sh.toFixed(0)} ชม.`}</li>`); }
+    }
+    lines.push(`<li><b>จะตกที่ไหน:</b> ${imp.halfH > 6 ? 'ยังบอกไม่ได้ เพราะช่วงเวลายังกว้างหลายสิบรอบโคจร' : imp.halfH > 1.5 ? 'เริ่มเห็นเป็นแนว ดูแผนที่จุดตก' : 'ระบุแนวได้แล้ว ดูแผนที่จุดตก'} · โอกาสตกในพื้นที่ประเทศไทยประมาณ ${imp.n ? Math.max(imp.inTH / imp.n * 100, 0.1).toFixed(1) : '<0.5'}% · ดาวเทียมขนาดเล็ก (6U) มักเผาไหม้หมดในอากาศ</li>`);
+    const tips = Array.isArray(off.tip) ? off.tip : [], dec = Array.isArray(off.decay) ? off.decay : [];
+    lines.push(`<li><b>ประกาศทางการ:</b> ${dec.length ? `มีประกาศยืนยันการตกจาก USSPACECOM (${esc(dec[0].DECAY_EPOCH || dec[0].MSG_EPOCH || '')})` : tips.length ? `มี TIP ล่าสุดคาดตก ${esc(tips[0].DECAY_EPOCH || '')} UTC ที่ ${esc(tips[0].LAT || '?')}, ${esc(tips[0].LON || '?')}` : 'ยังไม่มีประกาศจาก USSPACECOM (ดาวเทียมเล็กกว่า 1 m² อาจไม่มี TIP มีเพียงประกาศหลังตก)'}</li>`);
+    if (b.kp >= 5) lines.push(`<li><b>สภาพอวกาศ:</b> มีพายุแม่เหล็กโลก (Kp ${b.kp}) อาจทำให้ตกเร็วกว่าที่คาด</li>`);
+    const sat = stat.news && stat.news.satnogs;
+    if (sat && sat.last_good) lines.push(`<li><b>สัญญาณวิทยุ:</b> สถานีภาคพื้นดินเครือข่าย SatNOGS รับสัญญาณได้ล่าสุด ${thDate(Date.parse(sat.last_good))}</li>`);
+    const nn = stat.news && Array.isArray(stat.news.items) ? stat.news.items.length : 0;
+    lines.push(`<li><b>ข่าว/การกล่าวถึง:</b> ${nn ? `พบ ${nn} รายการใน 14 วันล่าสุด (ดูแผงข่าวด้านล่าง)` : 'ยังไม่พบข่าวหรือโพสต์ที่พูดถึงการตกของ NAPA-1'}</li>`);
+    const nextRun = stat.status && stat.status.lastRun ? Date.parse(stat.status.lastRun) + 2 * 36e5 : null;
+    box.innerHTML = `<div class="brief-head ${lvl}">${head}</div><ul>${lines.join('')}</ul><div class="brief-foot">ค่าพยากรณ์เชิงวิศวกรรม · ${nextRun ? 'อัปเดตครั้งถัดไปประมาณ ' + thDate(nextRun) : 'อัปเดตอัตโนมัติทุก 2 ชม.'}</div>`;
+    st.briefText = `[NAPA-1 สรุปสถานการณ์ ${thDate(Date.now())}]\n` + box.innerText.replace(/\n{2,}/g, '\n').trim() + `\n${location.href.split('#')[0]}`;
+  }
+  function renderNews() {
+    const box = $('newsList'); if (!box) return;
+    const items = stat.news && Array.isArray(stat.news.items) ? stat.news.items : [];
+    const off = stat.official || {}, rows = [];
+    for (const t of (off.tip || []).slice(0, 3)) rows.push(`<div class="news-item off"><b>TIP · USSPACECOM</b><small>คาดตก ${esc(t.DECAY_EPOCH || '')} UTC · ${esc(t.LAT || '')}, ${esc(t.LON || '')} · ออก ${esc(t.MSG_EPOCH || t.INSERT_EPOCH || '')}</small></div>`);
+    for (const d of (off.decay || []).slice(0, 2)) rows.push(`<div class="news-item off"><b>DECAY · USSPACECOM</b><small>${esc(d.DECAY_EPOCH || '')} · ${esc(d.MSG_TYPE || '')}</small></div>`);
+    for (const it of items.slice(0, 12)) {
+      const url = /^https:\/\//.test(it.url || '') ? it.url : '#';
+      rows.push(`<a class="news-item" href="${esc(url)}" target="_blank" rel="noopener noreferrer"><b>${esc(it.title || '')}</b><small>${esc(it.source || '')} · ${it.date ? esc(thDate(Date.parse(it.date))) : ''} · ${esc(it.kind || '')}</small></a>`);
+    }
+    box.innerHTML = rows.join('') || '<small style="color:#7093a8">ยังไม่พบข่าว โพสต์ หรือประกาศเกี่ยวกับการตกของ NAPA-1 (ค้นหา Google News, Reddit, Space-Track TIP ทุก 2 ชม.)</small>';
+    const u = stat.news && stat.news.updated; $('newsUpd').textContent = u ? 'ค้นล่าสุด ' + thDate(Date.parse(u)) : '—';
   }
 
   function setElement(el, source) {
@@ -756,7 +835,7 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
         log('Re-entry forecast · ' + fmtShort(fc.eta) + ' ICT', `window ${fmtShort(fc.win[0])} – ${fmtShort(fc.win[2])} · ${methodName(fc.method)}`, fc.nominalDays < 3 ? 'crit' : 'warn');
       }
     }
-    renderMetrics(); renderForecast(); renderChart(); renderImpact();
+    renderMetrics(); renderForecast(); renderChart(); renderImpact(); renderBrief();
   }
   const methodName = m => ({ ndot: 'TLE ṅ calibration', history: 'TLE history fit', bstar: 'B* ballistic', auto: 'auto' }[m] || m);
 
@@ -945,6 +1024,7 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
     $('ipTime').textContent = fmt(nom.t) + ' · ' + (nom.ascending ? 'ขาขึ้น (north-bound)' : 'ขาลง (south-bound)');
     $('ipUnc').textContent = `±${halfH.toFixed(0)} h ≈ ±${(halfH * 60 / P).toFixed(0)} รอบ ≈ ±${Math.round(halfH * 3600 * 7.8 / 1e4) * 1e4 >= 1e6 ? (halfH * 3600 * 7.8 / 1e6).toFixed(1) + ' ล้าน' : (Math.round(halfH * 3600 * 7.8 / 1000) * 1000).toLocaleString('en-US')} km`;
     $('ipTH').textContent = `${inTH} / ${n} · ${pct(inTH)}`;
+    st.impact = { inTH, n, halfH, nom };
     $('ipGS').textContent = `${near} / ${n} · ${pct(near)}`;
     const q = halfH > 6 ? ['ยังระบุตำแหน่งไม่ได้', '#e8bc7a', 'ช่วงเวลายังกว้างหลายรอบโคจร — จุด nominal เป็นเพียงตัวแทนทางคณิตศาสตร์ ไม่ใช่การทำนายสถานที่'] : halfH > 1.5 ? ['เริ่มจำกัดเป็นแนว', '#f0c68c', 'เหลือไม่กี่รอบโคจร — ดูแนวกลุ่มจุดเพื่อดูว่าภูมิภาคใดมีโอกาส'] : ['พอระบุแนวได้', '#ffb08f', 'ความไม่แน่นอนต่ำกว่า 1 รอบโคจร — ตำแหน่งตามแนววงโคจรเริ่มมีความหมาย'];
     $('ipQual').innerHTML = `<span style="color:${q[1]}">${q[0]}</span>`; $('ipNote').textContent = q[2];
@@ -984,6 +1064,7 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
       document.querySelectorAll('[data-range]').forEach(x => x.classList.remove('sel')); this.classList.add('sel'); st.range = this.dataset.range; renderChart();
     }));
     document.querySelectorAll('.nav-item').forEach(a => a.addEventListener('click', function () { document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active')); this.classList.add('active'); }));
+    $('btnCopyBrief').addEventListener('click', async () => { const t = st.briefText || ''; try { await navigator.clipboard.writeText(t); $('btnCopyBrief').textContent = 'คัดลอกแล้ว ✓'; } catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); $('btnCopyBrief').textContent = 'คัดลอกแล้ว ✓'; } catch (e2) { } ta.remove(); } setTimeout(() => { $('btnCopyBrief').textContent = 'คัดลอกข้อความส่ง LINE'; }, 2500); });
     $('inMethod').value = st.method;
     $('inMethod').addEventListener('change', e => { st.method = e.target.value; LS.set('method', st.method); runForecast(); });
     $('btnRun').addEventListener('click', () => {

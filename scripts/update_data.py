@@ -84,6 +84,7 @@ except Exception as e:
         notes.append(f"SatNOGS error: {e2}")
 
 st_user, st_pass = os.environ.get("ST_USER"), os.environ.get("ST_PASS")
+st_op = None
 if st_user and st_pass:
     try:
         jar = http.cookiejar.CookieJar()
@@ -93,6 +94,7 @@ if st_user and st_pass:
         q = (f"https://www.space-track.org/basicspacedata/query/class/gp_history/NORAD_CAT_ID/{NORAD}"
              "/EPOCH/%3Enow-10/orderby/EPOCH%20asc/format/tle/emptyresult/show")
         add(parse_tle(get(q, 90, op)), "Space-Track gp_history")
+        st_op = op
     except Exception as e:
         notes.append(f"Space-Track error: {e}")
 
@@ -124,6 +126,75 @@ try:
 except Exception as e:
     notes.append(f"NOAA error: {e}")
 
+
+# ---------- 4) Official messages (Space-Track TIP / decay) ----------
+official = load("official.json", {"tip": [], "decay": []})
+if st_op:
+    for cls, key in (("tip", "tip"), ("decay", "decay")):
+        try:
+            q = (f"https://www.space-track.org/basicspacedata/query/class/{cls}/NORAD_CAT_ID/{NORAD}"
+                 "/orderby/MSG_EPOCH%20desc/limit/5/format/json/emptyresult/show")
+            rows = json.loads(get(q, 60, st_op) or "[]")
+            official[key] = [{k: r.get(k) for k in ("MSG_EPOCH", "INSERT_EPOCH", "DECAY_EPOCH", "WINDOW", "REV", "LAT", "LON", "INCL", "MSG_TYPE", "PRECEDENCE") if k in r} for r in rows][:5]
+        except Exception as e:
+            notes.append(f"Space-Track {cls} error: {e}")
+official["checked"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+save("official.json", official, indent=1)
+
+# ---------- 5) News / web mentions (Google News RSS, Reddit) + SatNOGS radio ----------
+import re, xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
+news = load("news.json", {"items": []})
+items = {i["url"]: i for i in news.get("items", []) if i.get("url")}
+since = datetime.now(timezone.utc) - timedelta(days=14)
+KEEP = re.compile(r"(napa[\s-]?1|นภา\s*1|46320)", re.I)
+TOPIC = re.compile(r"(satellite|ดาวเทียม|re-?entry|reenter|decay|space|อวกาศ|กองทัพอากาศ|RTAF|ตก)", re.I)
+
+def keep(title):
+    return bool(KEEP.search(title or "")) and bool(TOPIC.search(title or ""))
+
+for q, hl in (('"NAPA-1" satellite', "en-US&gl=US&ceid=US:en"), ("ดาวเทียม NAPA-1", "th&gl=TH&ceid=TH:th"), ("ดาวเทียม นภา 1 กองทัพอากาศ", "th&gl=TH&ceid=TH:th")):
+    try:
+        xml = get("https://news.google.com/rss/search?q=" + urllib.parse.quote(q) + "&hl=" + hl, 40)
+        for it in ET.fromstring(xml).iter("item"):
+            title, link = it.findtext("title") or "", it.findtext("link") or ""
+            try:
+                dt = parsedate_to_datetime(it.findtext("pubDate"))
+            except Exception:
+                continue
+            src = it.find("source")
+            if dt >= since and keep(title) and link.startswith("https://"):
+                items[link] = {"title": title[:200], "url": link, "source": (src.text if src is not None else "Google News")[:60],
+                               "date": dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "kind": "ข่าว"}
+    except Exception as e:
+        notes.append(f"Google News error: {str(e)[:60]}")
+
+try:
+    j = json.loads(get("https://www.reddit.com/search.json?q=%22NAPA-1%22%20satellite&sort=new&t=month&limit=25", 40))
+    for c in j.get("data", {}).get("children", []):
+        d = c.get("data", {})
+        dt = datetime.fromtimestamp(d.get("created_utc", 0), timezone.utc)
+        title = d.get("title", "")
+        if dt >= since and keep(title):
+            url = "https://www.reddit.com" + d.get("permalink", "")
+            items[url] = {"title": title[:200], "url": url, "source": "Reddit r/" + d.get("subreddit", ""),
+                          "date": dt.strftime("%Y-%m-%dT%H:%M:%SZ"), "kind": "เว็บบอร์ด"}
+except Exception as e:
+    notes.append(f"Reddit error: {str(e)[:60]}")
+
+satnogs = news.get("satnogs", {})
+try:
+    obs = json.loads(get(f"https://network.satnogs.org/api/observations/?satellite__norad_cat_id={NORAD}&status=good&format=json", 40))
+    if obs:
+        satnogs = {"last_good": obs[0].get("end") or obs[0].get("start"), "station": obs[0].get("station_name"),
+                   "url": f"https://network.satnogs.org/observations/{obs[0].get('id')}/"}
+except Exception as e:
+    notes.append(f"SatNOGS network error: {str(e)[:60]}")
+
+fresh = [i for i in items.values() if i.get("date", "") >= since.strftime("%Y-%m-%dT%H:%M:%SZ")]
+fresh.sort(key=lambda i: i["date"], reverse=True)
+save("news.json", {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "items": fresh[:30], "satnogs": satnogs}, indent=1)
+
 # ---------- 3) Official decay date ----------
 status = load("status.json", {})
 try:
@@ -136,4 +207,7 @@ except Exception as e:
 status.update({"lastRun": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "note": (f"new TLE: {', '.join(new_sets)}" if new_sets else "no new TLE") + ("; " + "; ".join(notes) if notes else "")})
 save("status.json", status, indent=1)
+runlog = load("runlog.json", [])
+runlog.append({"t": status["lastRun"], "new": new_sets})
+save("runlog.json", runlog[-48:], indent=1)
 print(status["note"])

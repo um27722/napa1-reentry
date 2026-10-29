@@ -1,9 +1,9 @@
 {
- "updated": "2026-10-29T19:40:41Z",
+ "updated": "2026-10-29T23:57:52Z",
  "items": [],
  "satnogs": {
-  "last_good": "2026-10-29T19:38:47Z",
-  "station": "UX5UL",
-  "url": "https://network.satnogs.org/observations/15318644/"
+  "last_good": "2026-10-29T23:57:25Z",
+  "station": "DEX-X",
+  "url": "https://network.satnogs.org/observations/15317440/"
  }
 }

@@ -1,0 +1,50 @@
+name: Update data & deploy
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"   # ทุก 2 ชม. (UTC) — ดึง TLE / F10.7 ใหม่แล้ว deploy
+  workflow_dispatch:          # กดรันเองได้ที่แท็บ Actions
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch latest orbital & space-weather data
+        run: python scripts/update_data.py
+        env:
+          ST_USER: ${{ secrets.ST_USER }}
+          ST_PASS: ${{ secrets.ST_PASS }}
+
+      - name: Commit data changes
+        run: |
+          git config user.name "napa-data-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "data: update $(date -u +%Y-%m-%dT%H:%MZ)" && git push)
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deploy
+        uses: actions/deploy-pages@v4

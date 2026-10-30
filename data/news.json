@@ -1,9 +1,9 @@
 {
- "updated": "2026-10-30T02:08:28Z",
+ "updated": "2026-10-30T02:16:19Z",
  "items": [],
  "satnogs": {
-  "last_good": "2026-10-30T02:07:32Z",
-  "station": "PE0SAT-21",
-  "url": "https://network.satnogs.org/observations/15319912/"
+  "last_good": "2026-10-30T02:23:53Z",
+  "station": "MAUSyagi",
+  "url": "https://network.satnogs.org/observations/15309438/"
  }
 }

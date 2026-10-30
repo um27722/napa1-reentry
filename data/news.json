@@ -1,9 +1,9 @@
 {
- "updated": "2026-10-30T02:18:18Z",
+ "updated": "2026-10-30T05:54:44Z",
  "items": [],
  "satnogs": {
-  "last_good": "2026-10-30T02:21:01Z",
-  "station": "pisti525",
-  "url": "https://network.satnogs.org/observations/15315796/"
+  "last_good": "2026-10-30T06:01:30Z",
+  "station": "N0NQD-SatScanner UHF",
+  "url": "https://network.satnogs.org/observations/15310135/"
  }
 }

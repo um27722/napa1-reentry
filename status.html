@@ -16,7 +16,7 @@ a{color:inherit}
 .hdr{display:grid;grid-template-columns:300px 1fr 300px;align-items:center;gap:14px;border:1px solid var(--line2);border-radius:6px;padding:10px 16px;background:linear-gradient(180deg,#071a31,#04101f);position:relative}
 .hdr:after{content:'';position:absolute;left:30%;right:30%;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
 .org{display:flex;align-items:center;gap:12px}
-.org img,.org .lph{width:64px;height:64px;object-fit:contain;flex:none}
+.org img,.org .lph{width:86px;height:86px;filter:drop-shadow(0 0 8px #2bb8ff44);object-fit:contain;flex:none}
 .org .lph{border:1px dashed #2f6d97;border-radius:50%;display:grid;place-items:center;font-size:9px;color:#5f8db0;text-align:center;line-height:1.2}
 .org .txt{font-size:10.5px;letter-spacing:.14em;color:#9cc2dc;line-height:1.55}
 .org.right{justify-content:flex-end;text-align:right}
@@ -101,9 +101,9 @@ svg text{font-family:Rajdhani,'Noto Sans Thai',sans-serif}
 <body>
 <div class="wrap">
  <header class="hdr">
-  <div class="org"><img id="logoL" src="assets/logo-left.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'lph',innerHTML:'ตรา<br>ศปอว.ทอ.'}))"><div class="txt">ROYAL THAI AIR FORCE<br>SPACE OPERATIONS CENTER<br>SITUATIONAL AWARENESS</div></div>
+  <div class="org"><img id="logoL" src="assets/logo-left.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'lph',innerHTML:'ตรา<br>ศปอว.ทอ.'}))"><div class="txt">ROYAL THAI AIR FORCE<br>SPACE OPERATIONS CENTER<br><span style="letter-spacing:0">ศูนย์ปฏิบัติการทางอวกาศกองทัพอากาศ</span></div></div>
   <div class="title"><h1>NAPA-1 N RE-ENTRY MONITORING</h1><div class="sub en">ORBITAL DECAY · CURRENT STATUS · RE-ENTRY ASSESSMENT</div><div class="subth">การลดระดับวงโคจร สถานะปัจจุบัน และการประเมินการกลับเข้าสู่ชั้นบรรยากาศ</div></div>
-  <div class="org right"><div class="txt">RTAF<br>SPACE SURVEILLANCE<br>&amp; RECONNAISSANCE</div><img id="logoR" src="assets/logo-right.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'lph',innerHTML:'ตรา<br>หน่วย'}))"></div>
+  <div class="org right"><div class="txt">ISR DIVISION<br>SPACE RECONNAISSANCE<br><span style="letter-spacing:0">กองลาดตระเวนและเฝ้าตรวจทางอวกาศ</span></div><img id="logoR" src="assets/logo-right.png" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'lph',innerHTML:'ตรา<br>หน่วย'}))"></div>
  </header>
  <div class="clockbar"><span>วันนี้ <b id="today">—</b></span><span class="live"><i></i><span id="upd">กำลังโหลดข้อมูล…</span></span><a class="back" href="index.html">← แดชบอร์ดหลัก (วิเคราะห์ละเอียด)</a></div>
 

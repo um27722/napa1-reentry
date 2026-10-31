@@ -1,9 +1,9 @@
 {
- "updated": "2026-10-31T05:50:31Z",
+ "updated": "2026-10-31T12:39:31Z",
  "items": [],
  "satnogs": {
-  "last_good": "2026-10-31T05:53:26Z",
-  "station": "N6FR",
-  "url": "https://network.satnogs.org/observations/15330139/"
+  "last_good": "2026-10-31T12:49:09Z",
+  "station": "SP2ZIE",
+  "url": "https://network.satnogs.org/observations/15324288/"
  }
 }

@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-01T06:13:28Z",
+ "updated": "2026-11-01T13:34:06Z",
  "items": [],
  "satnogs": {
-  "last_good": "2026-11-01T06:13:31Z",
-  "station": "LSA",
-  "url": "https://network.satnogs.org/observations/15334823/"
+  "last_good": "2026-11-01T13:36:41Z",
+  "station": "LU3ARN",
+  "url": "https://network.satnogs.org/observations/15331838/"
  }
 }

@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-01T18:58:02Z",
+ "updated": "2026-11-01T23:39:05Z",
  "items": [],
  "satnogs": {
-  "last_good": "2026-11-01T18:55:38Z",
-  "station": "PE0SAT-12",
-  "url": "https://network.satnogs.org/observations/15337853/"
+  "last_good": "2026-11-01T23:40:09Z",
+  "station": "ZL1RED",
+  "url": "https://network.satnogs.org/observations/15339553/"
  }
 }

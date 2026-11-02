@@ -199,26 +199,21 @@ save("news.json", {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%
 # ---------- 6) SatNOGS observation log (accumulates; good/bad/failed + pending counts) ----------
 obslog = load("obs_log.json", {"obs": {}})
 try:
-    t1 = datetime.now(timezone.utc); t0 = t1 - timedelta(hours=36)
-    url = (f"https://network.satnogs.org/api/observations/?satellite__norad_cat_id={NORAD}"
-           f"&start={t0.strftime('%Y-%m-%dT%H:%M:%SZ')}&end={t1.strftime('%Y-%m-%dT%H:%M:%SZ')}&format=json")
-    for page in range(4):
-        try:
-            rows = json.loads(get(url + f"&page={page + 1}", 40))
-        except Exception:
-            break
+    t1 = datetime.now(timezone.utc); t0 = t1 - timedelta(hours=36); fetched = 0
+    for stt in ("good", "bad", "failed"):
+        url = (f"https://network.satnogs.org/api/observations/?satellite__norad_cat_id={NORAD}&status={stt}"
+               f"&start={t0.strftime('%Y-%m-%dT%H:%M:%SZ')}&format=json")
+        rows = json.loads(get(url, 40))
         if isinstance(rows, dict):
             rows = rows.get("results", [])
+        fetched += len(rows)
         for o in rows:
-            if o.get("status") in ("future",):
-                continue
             obslog["obs"][str(o.get("id"))] = {
                 "id": o.get("id"), "start": o.get("start"), "end": o.get("end"), "station": (o.get("station_name") or "")[:60],
                 "lat": o.get("station_lat"), "lng": o.get("station_lng"), "status": o.get("status"),
                 "max_alt": o.get("max_altitude"), "frames": len(o.get("demoddata") or []),
                 "url": f"https://network.satnogs.org/observations/{o.get('id')}/"}
-        if len(rows) < 25:
-            break
+    notes.append(f"SatNOGS obs fetched {fetched}")
 except Exception as e:
     notes.append(f"SatNOGS log error: {str(e)[:60]}")
 cut = (datetime.now(timezone.utc) - timedelta(days=10)).strftime("%Y-%m-%dT%H:%M:%SZ")

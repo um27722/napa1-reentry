@@ -726,7 +726,7 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
     lines.push(`<li><b>ประกาศทางการ:</b> ${dec.length ? `มีประกาศยืนยันการตกจาก USSPACECOM (${esc(dec[0].DECAY_EPOCH || dec[0].MSG_EPOCH || '')})` : tips.length ? `มี TIP ล่าสุดคาดตก ${esc(tips[0].DECAY_EPOCH || '')} UTC ที่ ${esc(tips[0].LAT || '?')}, ${esc(tips[0].LON || '?')}` : 'ยังไม่มีประกาศจาก USSPACECOM (ดาวเทียมเล็กกว่า 1 m² อาจไม่มี TIP มีเพียงประกาศหลังตก)'}</li>`);
     if (b.kp >= 5) lines.push(`<li><b>สภาพอวกาศ:</b> มีพายุแม่เหล็กโลก (Kp ${b.kp}) อาจทำให้ตกเร็วกว่าที่คาด</li>`);
     const sat = stat.news && stat.news.satnogs;
-    if (sat && sat.last_good) lines.push(`<li><b>สัญญาณวิทยุ:</b> สถานีภาคพื้นดินเครือข่าย SatNOGS รับสัญญาณได้ล่าสุด ${thDate(Date.parse(sat.last_good))}</li>`);
+    if (sat && sat.last_good) lines.push(`<li><b>สัญญาณวิทยุ (ยังไม่ยืนยัน):</b> SatNOGS มีรายงาน good ล่าสุด ${thDate(Date.parse(sat.last_good))} แต่มาจากหลายสถานีทั่วโลกพร้อมกัน อาจเป็นดาวเทียมดวงอื่น</li>`);
     const nn = stat.news && Array.isArray(stat.news.items) ? stat.news.items.length : 0;
     lines.push(`<li><b>ข่าว/การกล่าวถึง:</b> ${nn ? `พบ ${nn} รายการใน 14 วันล่าสุด (ดูแผงข่าวด้านล่าง)` : 'ยังไม่พบข่าวหรือโพสต์ที่พูดถึงการตกของ NAPA-1'}</li>`);
     const nextRun = stat.status && stat.status.lastRun ? Date.parse(stat.status.lastRun) + 2 * 36e5 : null;

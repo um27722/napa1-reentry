@@ -555,10 +555,10 @@ table.lt a{color:#7fe7ff}
       ['ช่วงเวลา (90%)', `${thDate(fc.win[0])} – ${thDate(fc.win[2])}`],
       ['ความเชื่อมั่น', `${conf[0]} (±${half.toFixed(0)} ชม.)`, conf[1]],
       ['ข้อมูลวงโคจรล่าสุด (TLE)', thDate(el.epoch)],
-      ['รับสัญญาณ SatNOGS ล่าสุด', sat && sat.last_good ? thDate(Date.parse(sat.last_good)) : 'ไม่มีข้อมูล', sat && sat.last_good ? 'ok' : ''],
+      ['SatNOGS รายงาน "good" ล่าสุด*', sat && sat.last_good ? thDate(Date.parse(sat.last_good)) + ' (ยังไม่ยืนยัน)' : 'ไม่มีข้อมูล'],
       ['ประกาศ TIP ล่าสุด', tipTxt]
     ];
-    $('rows').innerHTML = rows.map(r => `<div class="row"><span>${r[0]}</span><b class="${r[2] || ''}">${r[1]}</b></div>`).join('');
+    $('rows').innerHTML = rows.map(r => `<div class="row"><span>${r[0]}</span><b class="${r[2] || ''}">${r[1]}</b></div>`).join('') + '<div class="note">* SatNOGS รายงาน good จากหลายสถานีทั่วโลกในเวลาเดียวกัน ซึ่งเป็นไปไม่ได้สำหรับดาวเทียมดวงเดียว จึงอาจเป็นสัญญาณดาวเทียมดวงอื่น ดูคอลัมน์มุมเงยจาก TLE ในบันทึกด้านล่าง</div>';
     const rate = fc.rateModel ? Math.abs(fc.rateModel) : null, a = [];
     if (st.decayed) a.push(`NAPA-1 กลับเข้าสู่ชั้นบรรยากาศแล้ว ตามประกาศ ${esc(st.decayed)}`);
     else {

@@ -713,15 +713,16 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
     const { fc, dLeft, prev, off, imp } = b, lines = [];
     let head, lvl;
     if (st.decayed) { head = `NAPA-1 กลับเข้าสู่ชั้นบรรยากาศแล้ว (ยืนยันทางการ ${esc(st.decayed)})`; lvl = 'done'; }
+    else if (fc.win[2] < Date.now()) { head = `NAPA-1 <b>น่าจะกลับเข้าสู่ชั้นบรรยากาศแล้ว</b> ประมาณ ${thDate(fc.eta)} · รอยืนยันจาก USSPACECOM`; lvl = 'crit'; }
     else { head = `NAPA-1 คาดว่าจะตกสู่ชั้นบรรยากาศ <b>${thDay(fc.eta)} ${partOfDay(fc.eta)}</b> (อีกประมาณ ${Math.max(0, dLeft).toFixed(1)} วัน)`; lvl = dLeft < 1 ? 'crit' : dLeft < 3 ? 'warn' : 'info'; }
     lines.push(`<li><b>เวลาที่น่าจะเป็น:</b> ${thDate(fc.eta)} · อาจคลาดได้ตั้งแต่ ${thDate(fc.win[0])} ถึง ${thDate(fc.win[2])}</li>`);
-    lines.push(`<li><b>ตอนนี้:</b> สูงจากพื้นโลกประมาณ ${b.alt.toFixed(0)} km ${b.drop24 ? `ลดลงวันละประมาณ ${b.drop24.toFixed(1)} km` : ''} (ยิ่งต่ำยิ่งลดเร็วขึ้น) ข้อมูลวงโคจรล่าสุดเมื่อ ${thDate(b.el.epoch)}</li>`);
+    if (fc.win[2] < Date.now()) lines.push(`<li><b>ตอนนี้:</b> เลยช่วงเวลาตกที่คาดการณ์แล้ว · ข้อมูลวงโคจรล่าสุดเมื่อ ${thDate(b.el.epoch)} (ขณะนั้นยังโคจรอยู่)</li>`); else lines.push(`<li><b>ตอนนี้:</b> สูงจากพื้นโลกประมาณ ${b.alt.toFixed(0)} km ${b.drop24 ? `ลดลงวันละประมาณ ${b.drop24.toFixed(1)} km` : ''} (ยิ่งต่ำยิ่งลดเร็วขึ้น) ข้อมูลวงโคจรล่าสุดเมื่อ ${thDate(b.el.epoch)}</li>`);
     if (prev && prev.run) {
       const rt = thDate(Date.parse(prev.run.t));
       if (prev.same) lines.push(`<li><b>รอบอัปเดตล่าสุด (${rt}):</b> ยังไม่มีข้อมูลวงโคจรชุดใหม่ ค่าพยากรณ์คงเดิม</li>`);
       else { const sh = (fc.eta - prev.eta) / 36e5; lines.push(`<li><b>รอบอัปเดตล่าสุด (${rt}):</b> ได้ข้อมูลวงโคจรใหม่ ${prev.n} ชุด → เวลาตก${Math.abs(sh) < 1 ? 'แทบไม่เปลี่ยน' : sh < 0 ? `เร็วขึ้น ${(-sh).toFixed(0)} ชม.` : `ช้าลง ${sh.toFixed(0)} ชม.`}</li>`); }
     }
-    lines.push(`<li><b>จะตกที่ไหน:</b> ${imp.halfH > 6 ? 'ยังบอกไม่ได้ เพราะช่วงเวลายังกว้างหลายสิบรอบโคจร' : imp.halfH > 1.5 ? 'เริ่มเห็นเป็นแนว ดูแผนที่จุดตก' : 'ระบุแนวได้แล้ว ดูแผนที่จุดตก'} · โอกาสตกในพื้นที่ประเทศไทยประมาณ ${imp.n ? Math.max(imp.inTH / imp.n * 100, 0.1).toFixed(1) : '<0.5'}% · ดาวเทียมขนาดเล็ก (6U) มักเผาไหม้หมดในอากาศ</li>`);
+    lines.push(`<li><b>จะตกที่ไหน:</b> ${imp.halfH > 6 ? 'ยังบอกไม่ได้ เพราะช่วงเวลายังกว้างหลายสิบรอบโคจร' : imp.halfH > 1.5 ? 'เริ่มเห็นเป็นแนว ดูแผนที่จุดตก' : 'ระบุแนวได้แล้ว ดูแผนที่จุดตก'} · โอกาสตกในพื้นที่ประเทศไทย ${imp.n ? (imp.inTH ? 'ประมาณ ' + (imp.inTH / imp.n * 100).toFixed(1) + '%' : `0 จาก ${imp.n} กรณี`) : '<0.5%'} · ดาวเทียมขนาดเล็ก (6U) มักเผาไหม้หมดในอากาศ</li>`);
     const tips = Array.isArray(off.tip) ? off.tip : [], dec = Array.isArray(off.decay) ? off.decay : [];
     lines.push(`<li><b>ประกาศทางการ:</b> ${dec.length ? `มีประกาศยืนยันการตกจาก USSPACECOM (${esc(dec[0].DECAY_EPOCH || dec[0].MSG_EPOCH || '')})` : tips.length ? `มี TIP ล่าสุดคาดตก ${esc(tips[0].DECAY_EPOCH || '')} UTC ที่ ${esc(tips[0].LAT || '?')}, ${esc(tips[0].LON || '?')}` : 'ยังไม่มีประกาศจาก USSPACECOM (ดาวเทียมเล็กกว่า 1 m² อาจไม่มี TIP มีเพียงประกาศหลังตก)'}</li>`);
     if (b.kp >= 5) lines.push(`<li><b>สภาพอวกาศ:</b> มีพายุแม่เหล็กโลก (Kp ${b.kp}) อาจทำให้ตกเร็วกว่าที่คาด</li>`);

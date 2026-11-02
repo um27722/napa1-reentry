@@ -555,7 +555,7 @@ table.lt a{color:#7fe7ff}
       ['ความสูงขณะนี้ (ประมาณ)', st.modelBelow ? 'ต่ำกว่า 120 km ตามแบบจำลอง' : `${(st.alt || 0).toFixed(0)} km`],
       ['เวลาคาดว่าจะตก', `${thDate(fc.eta)}`, 'hl'],
       ['ช่วงเวลา (90%)', `${thDate(fc.win[0])} – ${thDate(fc.win[2])}`],
-      ['ความเชื่อมั่น', `${conf[0]} (±${half.toFixed(0)} ชม.)`, conf[1]],
+      ['ความเชื่อมั่น', `${conf[0]} (±${half < 1.5 ? (half * 60).toFixed(0) + ' นาที' : half.toFixed(0) + ' ชม.'})`, conf[1]],
       ['ข้อมูลวงโคจรล่าสุด (TLE)', thDate(el.epoch)],
       ['สถานี ศปอว.ทอ. รับสัญญาณล่าสุด', st.gcGood.length ? thDate(Date.parse(st.gcGood[0].time)) + ` · ${esc(st.gcGood[0].callsign || '')} FCS ${esc(st.gcGood[0].fcs || '')}` : 'ไม่มีบันทึก', st.gcGood.length ? 'ok' : ''],
       ...(st.gcMiss ? [['รอบผ่าน ศปอว.ทอ. ล่าสุด', `${thDate(Date.parse(st.gcMiss.time))} · ${esc(st.gcMiss.pass_name || '')} · ไม่มีสัญญาณ (สถานีปกติ)`, 'hl']] : []),

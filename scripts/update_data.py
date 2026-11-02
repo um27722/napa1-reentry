@@ -182,12 +182,22 @@ try:
 except Exception as e:
     notes.append(f"Reddit error: {str(e)[:60]}")
 
-satnogs = news.get("satnogs", {})
+SAT_ID = os.environ.get("SATNOGS_SAT_ID", "MPAB-6491-6577-2634-7004")
 try:
-    obs = json.loads(get(f"https://network.satnogs.org/api/observations/?satellite__norad_cat_id={NORAD}&status=good&format=json", 40))
+    sats = json.loads(get(f"https://db.satnogs.org/api/satellites/?norad_cat_id={NORAD}&format=json", 40))
+    if sats and sats[0].get("sat_id"):
+        SAT_ID = sats[0]["sat_id"]
+except Exception as e:
+    notes.append(f"SatNOGS sat_id error: {str(e)[:60]}")
+satnogs = {}
+try:
+    obs = [o for o in json.loads(get(f"https://network.satnogs.org/api/observations/?sat_id={SAT_ID}&status=good&format=json", 40)) if o.get("norad_cat_id") == NORAD]
+    dec = [o for o in obs if o.get("demoddata")]
+    if dec:
+        satnogs["last_decoded"] = dec[0].get("end"); satnogs["decoded_station"] = dec[0].get("station_name")
     if obs:
-        satnogs = {"last_good": obs[0].get("end") or obs[0].get("start"), "station": obs[0].get("station_name"),
-                   "url": f"https://network.satnogs.org/observations/{obs[0].get('id')}/"}
+        satnogs.update({"last_good": obs[0].get("end") or obs[0].get("start"), "station": obs[0].get("station_name"),
+                        "url": f"https://network.satnogs.org/observations/{obs[0].get('id')}/", "sat_id": SAT_ID})
 except Exception as e:
     notes.append(f"SatNOGS network error: {str(e)[:60]}")
 
@@ -198,16 +208,19 @@ save("news.json", {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%
 
 # ---------- 6) SatNOGS observation log (accumulates; good/bad/failed + pending counts) ----------
 obslog = load("obs_log.json", {"obs": {}})
+if obslog.get("v") != 2:
+    obslog = {"obs": {}, "v": 2}  # reset: earlier versions mixed in other satellites
 try:
     t1 = datetime.now(timezone.utc); t0 = t1 - timedelta(hours=36); fetched = 0
     for stt in ("good", "bad", "failed"):
-        url = (f"https://network.satnogs.org/api/observations/?satellite__norad_cat_id={NORAD}&status={stt}"
-               f"&start={t0.strftime('%Y-%m-%dT%H:%M:%SZ')}&format=json")
+        url = f"https://network.satnogs.org/api/observations/?sat_id={SAT_ID}&status={stt}&format=json"
         rows = json.loads(get(url, 40))
         if isinstance(rows, dict):
             rows = rows.get("results", [])
         fetched += len(rows)
         for o in rows:
+            if o.get("norad_cat_id") != NORAD:
+                continue
             obslog["obs"][str(o.get("id"))] = {
                 "id": o.get("id"), "start": o.get("start"), "end": o.get("end"), "station": (o.get("station_name") or "")[:60],
                 "lat": o.get("station_lat"), "lng": o.get("station_lng"), "status": o.get("status"),
@@ -216,7 +229,7 @@ try:
     notes.append(f"SatNOGS obs fetched {fetched}")
 except Exception as e:
     notes.append(f"SatNOGS log error: {str(e)[:60]}")
-cut = (datetime.now(timezone.utc) - timedelta(days=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+cut = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
 obslog["obs"] = {k: v for k, v in obslog["obs"].items() if (v.get("end") or "") >= cut}
 obslog["updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 save("obs_log.json", obslog, indent=1)

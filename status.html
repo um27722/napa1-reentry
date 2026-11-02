@@ -144,7 +144,7 @@ table.lt a{color:#7fe7ff}
  <section class="pn logp" style="margin-top:12px">
   <h2><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>EVENT LOG <small>บันทึกเหตุการณ์ (เก็บอัตโนมัติทุกรอบ)</small></h2>
   <div class="loggrid"><div><div class="logh">ข้อมูลวงโคจร (TLE) แต่ละชุด และเวลาคาดตกที่คำนวณได้ ณ ขณะนั้น</div><div class="tblwrap"><table class="lt" id="tleLog"></table></div></div>
-  <div><div class="logh">การรับสัญญาณของเครือข่าย SatNOGS (ผ่านแล้ว)</div><div class="tblwrap"><table class="lt" id="obsLog"></table></div><div class="note">good = ถอดรหัสได้ (ยังไม่ผ่านการตรวจโดยคน) · bad = ไม่พบสัญญาณ · ตำแหน่งสถานีเทียบกับวงโคจรคำนวณจาก TLE ล่าสุด</div></div></div>
+  <div><div class="logh">การรับสัญญาณ NAPA-1 ของเครือข่าย SatNOGS</div><div class="tblwrap"><table class="lt" id="obsLog"></table></div><div class="note">good = ถอดรหัสได้ (ยังไม่ผ่านการตรวจโดยคน) · bad = ไม่พบสัญญาณ · ตำแหน่งสถานีเทียบกับวงโคจรคำนวณจาก TLE ล่าสุด</div></div></div>
  </section>
  <footer class="foot"><span>ข้อมูล: Space-Track (USSPACECOM) · CelesTrak · SatNOGS · NOAA SWPC · อัปเดตอัตโนมัติทุก 2 ชม. · หน้านี้โหลดข้อมูลใหม่ทุก 10 นาที</span><span>ค่าพยากรณ์เชิงวิศวกรรม — ใช้คู่กับประกาศทางการ (TIP / Decay)</span></footer>
 </div>
@@ -555,10 +555,10 @@ table.lt a{color:#7fe7ff}
       ['ช่วงเวลา (90%)', `${thDate(fc.win[0])} – ${thDate(fc.win[2])}`],
       ['ความเชื่อมั่น', `${conf[0]} (±${half.toFixed(0)} ชม.)`, conf[1]],
       ['ข้อมูลวงโคจรล่าสุด (TLE)', thDate(el.epoch)],
-      ['SatNOGS รายงาน "good" ล่าสุด*', sat && sat.last_good ? thDate(Date.parse(sat.last_good)) + ' (ยังไม่ยืนยัน)' : 'ไม่มีข้อมูล'],
+      ['SatNOGS ถอดรหัสสัญญาณได้ล่าสุด', sat && sat.last_decoded ? thDate(Date.parse(sat.last_decoded)) + ' · ' + esc(sat.decoded_station || '') : 'ไม่มีข้อมูล', sat && sat.last_decoded ? 'ok' : ''],
       ['ประกาศ TIP ล่าสุด', tipTxt]
     ];
-    $('rows').innerHTML = rows.map(r => `<div class="row"><span>${r[0]}</span><b class="${r[2] || ''}">${r[1]}</b></div>`).join('') + '<div class="note">* SatNOGS รายงาน good จากหลายสถานีทั่วโลกในเวลาเดียวกัน ซึ่งเป็นไปไม่ได้สำหรับดาวเทียมดวงเดียว จึงอาจเป็นสัญญาณดาวเทียมดวงอื่น ดูคอลัมน์มุมเงยจาก TLE ในบันทึกด้านล่าง</div>';
+    $('rows').innerHTML = rows.map(r => `<div class="row"><span>${r[0]}</span><b class="${r[2] || ''}">${r[1]}</b></div>`).join('') ;
     const rate = fc.rateModel ? Math.abs(fc.rateModel) : null, a = [];
     if (st.decayed) a.push(`NAPA-1 กลับเข้าสู่ชั้นบรรยากาศแล้ว ตามประกาศ ${esc(st.decayed)}`);
     else {

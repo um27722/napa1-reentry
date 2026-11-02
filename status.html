@@ -93,7 +93,13 @@ svg text{font-family:Rajdhani,'Noto Sans Thai',sans-serif}
 .assess li{position:relative;padding-left:16px;font-size:12.5px;line-height:1.55}
 .assess li:before{content:'';position:absolute;left:0;top:7px;width:8px;height:8px;background:var(--amber)}
 .foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:10.5px;color:#5f86a3}
-@media(max-width:1200px){.grid{grid-template-columns:1fr 1fr}.grid .status{grid-column:1/-1}.hdr{grid-template-columns:200px 1fr 200px}.title h1{font-size:34px}}
+.loggrid{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}.logh{font-size:12px;color:#9cc2dc;margin-bottom:6px}
+.tblwrap{max-height:330px;overflow:auto;border:1px solid #12385a;border-radius:4px}
+table.lt{width:100%;border-collapse:collapse;font-size:12px}table.lt th{position:sticky;top:0;background:#0a2440;color:#9cc2dc;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid #1d4f7a}
+table.lt td{padding:5px 8px;border-bottom:1px solid #0f2f4d;white-space:nowrap}table.lt tr.g td:first-child{border-left:3px solid var(--green)}table.lt tr.b td:first-child{border-left:3px solid #6b7f90}table.lt tr.n td{background:#2a1a0c}
+.st-good{color:var(--green);font-weight:700}.st-bad{color:#8aa0b3}.st-failed{color:#ff8a7a}.st-unknown{color:#ffb347}
+table.lt a{color:#7fe7ff}
+@media(max-width:1200px){.loggrid{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.grid .status{grid-column:1/-1}.hdr{grid-template-columns:200px 1fr 200px}.title h1{font-size:34px}}
 @media(max-width:760px){.wrap{padding:10px 10px 14px}.hdr{grid-template-columns:1fr;text-align:center}.org,.org.right{justify-content:center}.org .txt{display:none}.title h1{font-size:28px}.title .sub{font-size:10px;letter-spacing:.12em}
  .phases{grid-template-columns:1fr 1fr}.ph{min-height:230px;border-bottom:1px solid var(--line2);padding:10px}.ph .sat{width:96px;height:96px;top:64%}.ph .glow{top:64%!important}.ph h3{font-size:15px}.ph .num{width:28px;height:28px;font-size:16px;margin-right:6px}.ph .rng{margin:4px 0 0;font-size:16px}.ph .cap{font-size:10.5px;left:8px;right:8px;bottom:8px;padding:4px}.ph .cap .en{display:none}.ph .here{top:8px;right:8px}.grid{grid-template-columns:1fr}}
 </style>
@@ -134,6 +140,11 @@ svg text{font-family:Rajdhani,'Noto Sans Thai',sans-serif}
    <div class="rows" id="rows"></div>
    <div class="assess"><h3>KEY ASSESSMENT · ประเมินสถานการณ์</h3><ul id="assess"></ul></div>
   </article>
+ </section>
+ <section class="pn logp" style="margin-top:12px">
+  <h2><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>EVENT LOG <small>บันทึกเหตุการณ์ (เก็บอัตโนมัติทุกรอบ)</small></h2>
+  <div class="loggrid"><div><div class="logh">ข้อมูลวงโคจร (TLE) แต่ละชุด และเวลาคาดตกที่คำนวณได้ ณ ขณะนั้น</div><div class="tblwrap"><table class="lt" id="tleLog"></table></div></div>
+  <div><div class="logh">การรับสัญญาณของเครือข่าย SatNOGS (ผ่านแล้ว)</div><div class="tblwrap"><table class="lt" id="obsLog"></table></div><div class="note">good = ถอดรหัสได้ (ยังไม่ผ่านการตรวจโดยคน) · bad = ไม่พบสัญญาณ · ตำแหน่งสถานีเทียบกับวงโคจรคำนวณจาก TLE ล่าสุด</div></div></div>
  </section>
  <footer class="foot"><span>ข้อมูล: Space-Track (USSPACECOM) · CelesTrak · SatNOGS · NOAA SWPC · อัปเดตอัตโนมัติทุก 2 ชม. · หน้านี้โหลดข้อมูลใหม่ทุก 10 นาที</span><span>ค่าพยากรณ์เชิงวิศวกรรม — ใช้คู่กับประกาศทางการ (TIP / Decay)</span></footer>
 </div>
@@ -402,7 +413,7 @@ svg text{font-family:Rajdhani,'Noto Sans Thai',sans-serif}
   }
 
   async function load() {
-    const [tle, aps, wx, status, news, official] = await Promise.all(['tle', 'apsis', 'wx', 'status', 'news', 'official'].map(n => getJSON('data/' + n + '.json')));
+    const [tle, aps, wx, status, news, official, obslog, runlog] = await Promise.all(['tle', 'apsis', 'wx', 'status', 'news', 'official', 'obs_log', 'runlog'].map(n => getJSON('data/' + n + '.json')));
     if (!Array.isArray(tle) || !tle.length) { $('upd').textContent = 'ไม่พบไฟล์ข้อมูล'; return; }
     const els = []; for (const t of tle) { try { if (/^1 /.test(t.l1) && /^2 /.test(t.l2)) els.push(E.parseTLE(t.l1, t.l2, 'NAPA-1')); } catch (e) { } }
     els.sort((a, b) => a.epoch - b.epoch);
@@ -416,7 +427,7 @@ svg text{font-family:Rajdhani,'Noto Sans Thai',sans-serif}
     const fit = []; for (const h of hist.filter(h => h.epoch > el.epoch - 7 * 864e5 && h.epoch <= el.epoch)) { if (!fit.length || h.a <= fit[fit.length - 1].a + 0.3) fit.push(h); }
     const method = fit.length >= 3 && (fit[fit.length - 1].epoch - fit[0].epoch) > 1.5 * 864e5 ? 'history' : 'ndot';
     const fc = E.forecast(el, { f107: w.f107, f81: w.f81, kp: w.kp, method, hist: fit, TinfAt, runs: 800, stopAlt: 120 });
-    Object.assign(st, { el, els, hist, fc, w, status: status || {}, news: news || {}, official: official || {}, satrec: S.twoline2satrec(el.l1, el.l2) });
+    Object.assign(st, { obslog: obslog || { obs: {} }, runlog: runlog || [], TinfAt, el, els, hist, fc, w, status: status || {}, news: news || {}, official: official || {}, satrec: S.twoline2satrec(el.l1, el.l2) });
     st.pm = G.buildPhaseModel(S, st.satrec, el.epoch, el.n);
     st.decayed = (status && status.decay_date) || (official && Array.isArray(official.decay) && official.decay.length ? (official.decay[0].DECAY_EPOCH || 'confirmed') : null);
     st.loaded = Date.now();
@@ -433,7 +444,7 @@ svg text{font-family:Rajdhani,'Noto Sans Thai',sans-serif}
   }
   const phaseOf = alt => st.decayed ? 4 : alt > 220 ? 1 : alt > 150 ? 2 : alt > 120 ? 3 : 4;
 
-  function renderAll() { renderClock(); renderPhases(); renderChart(); renderMap(); renderStatus(); }
+  function renderAll() { renderClock(); renderPhases(); renderChart(); renderMap(); renderStatus(); renderLog(); }
 
   function renderClock() {
     const now = Date.now();
@@ -557,6 +568,33 @@ svg text{font-family:Rajdhani,'Noto Sans Thai',sans-serif}
       a.push(`ดาวเทียมขนาดเล็ก (6U) คาดว่าเผาไหม้หมดในชั้นบรรยากาศ · ความเชื่อมั่นจะสูงขึ้นใน 6 ชม. สุดท้าย`);
     }
     $('assess').innerHTML = a.map(s => `<li>${s}</li>`).join('');
+  }
+
+
+  /* ---------- Event log ---------- */
+  const etaCache = {};
+  function etaFor(el) {
+    const k = el.l1.substr(18, 14); if (etaCache[k]) return etaCache[k];
+    const fit = []; for (const h of st.hist.filter(h => h.epoch > el.epoch - 7 * 864e5 && h.epoch <= el.epoch)) { if (!fit.length || h.a <= fit[fit.length - 1].a + 0.3) fit.push(h); }
+    const method = fit.length >= 3 && (fit[fit.length - 1].epoch - fit[0].epoch) > 1.5 * 864e5 ? 'history' : 'ndot';
+    const fc = E.forecast(el, { f107: st.w.f107, f81: st.w.f81, kp: st.w.kp, method, hist: fit, TinfAt: st.TinfAt, runs: 60, stopAlt: 120 });
+    return (etaCache[k] = fc.error ? null : fc.eta);
+  }
+  function elevAt(o) {
+    try { const d = new Date((Date.parse(o.start) + Date.parse(o.end)) / 2), pv = S.propagate(st.satrec, d); if (!pv || !pv.position) return null;
+      const la = S.ecfToLookAngles({ latitude: o.lat * Math.PI / 180, longitude: o.lng * Math.PI / 180, height: 0 }, S.eciToEcf(pv.position, S.gstime(d))); return la.elevation * 180 / Math.PI; } catch (e) { return null; }
+  }
+  function renderLog() {
+    const els = st.els.slice(-14).reverse();
+    $('tleLog').innerHTML = '<tr><th>Epoch (เวลาไทย)</th><th>ความสูงเฉลี่ย</th><th>ลดลง/วัน</th><th>คาดตก (ณ ขณะนั้น)</th></tr>' + els.map((e, i) => {
+      const eta = etaFor(e), rate = Math.abs(E.obsRateNdot(e));
+      return `<tr class="${i === 0 ? 'n' : ''}"><td>${thDate(e.epoch)}${i === 0 ? ' <b style="color:#ffb347">ล่าสุด</b>' : ''}</td><td>${((e.perigee + e.apogee) / 2).toFixed(1)} km</td><td>${rate.toFixed(1)} km</td><td>${eta ? thDate(eta) : '—'}</td></tr>`;
+    }).join('');
+    const obs = Object.values((st.obslog && st.obslog.obs) || {}).filter(o => o.end && Date.parse(o.end) < Date.now()).sort((a, b) => Date.parse(b.end) - Date.parse(a.end)).slice(0, 80);
+    $('obsLog').innerHTML = '<tr><th>เวลา (ไทย)</th><th>สถานี</th><th>สถานะ</th><th>frame</th><th>มุมเงย (sched / TLE)</th></tr>' + (obs.length ? obs.map(o => {
+      const ev = elevAt(o), cls = o.status === 'good' ? 'g' : 'b';
+      return `<tr class="${cls}"><td><a href="${esc(o.url)}" target="_blank" rel="noopener">${thDate(Date.parse(o.end))}</a></td><td>${esc(o.station)}<br><small style="color:#6f94ad">${(+o.lat).toFixed(1)}, ${(+o.lng).toFixed(1)}</small></td><td class="st-${esc(o.status)}">${esc(o.status)}</td><td>${o.frames || 0}</td><td>${o.max_alt != null ? Math.round(o.max_alt) + '°' : '—'} / ${ev == null ? '—' : (ev > 0 ? `<span style="color:#4fe0a6">${ev.toFixed(0)}°</span>` : `<span style="color:#ff8a7a">${ev.toFixed(0)}°</span>`)}</td></tr>`;
+    }).join('') : '<tr><td colspan="5" style="color:#6f94ad">ยังไม่มีบันทึก (เริ่มเก็บตั้งแต่รอบอัปเดตถัดไป)</td></tr>');
   }
 
   load();

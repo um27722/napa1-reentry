@@ -195,6 +195,37 @@ fresh = [i for i in items.values() if i.get("date", "") >= since.strftime("%Y-%m
 fresh.sort(key=lambda i: i["date"], reverse=True)
 save("news.json", {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "items": fresh[:30], "satnogs": satnogs}, indent=1)
 
+
+# ---------- 6) SatNOGS observation log (accumulates; good/bad/failed + pending counts) ----------
+obslog = load("obs_log.json", {"obs": {}})
+try:
+    t1 = datetime.now(timezone.utc); t0 = t1 - timedelta(hours=36)
+    url = (f"https://network.satnogs.org/api/observations/?satellite__norad_cat_id={NORAD}"
+           f"&start={t0.strftime('%Y-%m-%dT%H:%M:%SZ')}&end={t1.strftime('%Y-%m-%dT%H:%M:%SZ')}&format=json")
+    for page in range(4):
+        try:
+            rows = json.loads(get(url + f"&page={page + 1}", 40))
+        except Exception:
+            break
+        if isinstance(rows, dict):
+            rows = rows.get("results", [])
+        for o in rows:
+            if o.get("status") in ("future",):
+                continue
+            obslog["obs"][str(o.get("id"))] = {
+                "id": o.get("id"), "start": o.get("start"), "end": o.get("end"), "station": (o.get("station_name") or "")[:60],
+                "lat": o.get("station_lat"), "lng": o.get("station_lng"), "status": o.get("status"),
+                "max_alt": o.get("max_altitude"), "frames": len(o.get("demoddata") or []),
+                "url": f"https://network.satnogs.org/observations/{o.get('id')}/"}
+        if len(rows) < 25:
+            break
+except Exception as e:
+    notes.append(f"SatNOGS log error: {str(e)[:60]}")
+cut = (datetime.now(timezone.utc) - timedelta(days=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+obslog["obs"] = {k: v for k, v in obslog["obs"].items() if (v.get("end") or "") >= cut}
+obslog["updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+save("obs_log.json", obslog, indent=1)
+
 # ---------- 3) Official decay date ----------
 status = load("status.json", {})
 try:
@@ -208,6 +239,11 @@ status.update({"lastRun": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S
                "note": (f"new TLE: {', '.join(new_sets)}" if new_sets else "no new TLE") + ("; " + "; ".join(notes) if notes else "")})
 save("status.json", status, indent=1)
 runlog = load("runlog.json", [])
-runlog.append({"t": status["lastRun"], "new": new_sets})
-save("runlog.json", runlog[-48:], indent=1)
+latest = tle[-1] if tle else None
+goods = [o for o in obslog["obs"].values() if o.get("status") == "good"]
+runlog.append({"t": status["lastRun"], "new": new_sets,
+               "latest_epoch": latest["epoch"] if latest else None,
+               "tip": len(official.get("tip") or []), "decay": len(official.get("decay") or []),
+               "sat_good": len(goods), "last_good": max([o["end"] for o in goods], default=None)})
+save("runlog.json", runlog[-500:], indent=1)
 print(status["note"])

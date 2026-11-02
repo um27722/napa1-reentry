@@ -454,11 +454,11 @@ table.lt a{color:#7fe7ff}
 
   function renderPhases() {
     if (!st.el) return;
-    const alt = altNow(Date.now()), ph = phaseOf(alt); st.alt = alt; st.phase = ph;
+    const alt = altNow(Date.now()), ph = phaseOf(alt); st.alt = alt; st.phase = ph; st.modelBelow = !st.decayed && alt <= 120.5;
     document.querySelectorAll('.ph').forEach(d => { const p = +d.dataset.p; d.classList.toggle('active', p === ph); d.classList.toggle('done', p < ph); });
     const X = a => Math.max(0, Math.min(100, (300 - a) / 200 * 100));
     $('altbar').innerHTML = [220, 150, 120].map(a => `<span class="tick" style="left:${X(a)}%"></span><span class="lbl" style="left:${X(a)}%;color:#9cc2dc;font-weight:500;top:-16px">${a}</span>`).join('') +
-      `<span class="mark" style="left:${X(alt)}%"></span><span class="lbl" style="left:${X(alt)}%">NAPA-1 ≈ ${alt.toFixed(0)} km</span>`;
+      `<span class="mark" style="left:${X(alt)}%"></span><span class="lbl" style="left:${Math.min(X(alt), 88)}%">${st.modelBelow ? 'แบบจำลอง: ต่ำกว่า 120 km (รอยืนยัน)' : 'NAPA-1 ≈ ' + alt.toFixed(0) + ' km'}</span>`;
   }
 
   function renderChart() {
@@ -496,7 +496,7 @@ table.lt a{color:#7fe7ff}
     const an = st.alt || altNow(now);
     g += `<path d="M${x(now)} ${T}V${B}" stroke="#7fe7ff" stroke-width="1.4"/><rect x="${x(now) - 30}" y="${B + 26}" width="60" height="18" rx="3" fill="#0b3350" stroke="#7fe7ff"/><text x="${x(now)}" y="${B + 39}" text-anchor="middle" fill="#7fe7ff" font-size="12" font-weight="700">วันนี้</text>`;
     g += `<circle cx="${x(now)}" cy="${y(an)}" r="6" fill="none" stroke="#fff" class="pulse-ring"/><circle cx="${x(now)}" cy="${y(an)}" r="6.5" fill="#fff" stroke="#ff8a2a" stroke-width="3"/>`;
-    g += `<text x="${x(now) - 10}" y="${y(an) - 14}" text-anchor="end" fill="#fff" font-size="13" font-weight="700">ตอนนี้ ≈ ${an.toFixed(0)} km</text>`;
+    g += `<text x="${x(now) - 10}" y="${y(an) - 14}" text-anchor="end" fill="#fff" font-size="13" font-weight="700">${st.modelBelow ? 'แบบจำลอง: < 120 km' : 'ตอนนี้ ≈ ' + an.toFixed(0) + ' km'}</text>`;
     // ETA marker at 120 km
     g += `<g class="blink"><circle cx="${x(fc.eta)}" cy="${y(120)}" r="11" fill="none" stroke="#ff4d3d" stroke-width="2"/><circle cx="${x(fc.eta)}" cy="${y(120)}" r="6" fill="#ff4d3d"/></g>`;
     g += `<text x="${x(fc.eta)}" y="${y(120) + 26}" text-anchor="middle" fill="#ff8a7a" font-size="12.5" font-weight="700">คาดตก ${thDate(fc.eta)}</text>`;
@@ -526,7 +526,7 @@ table.lt a{color:#7fe7ff}
     if (cur) {
       const sx = MX(cur.lon), sy = MY(cur.lat), lx = sx > 700 ? sx - 290 : sx + 24, ly = sy < 80 ? sy + 18 : sy - 66;
       h += `<circle cx="${sx}" cy="${sy}" r="8" fill="none" stroke="#ff4d3d" stroke-width="2" class="pulse-ring"/><circle cx="${sx}" cy="${sy}" r="9" fill="#ff4d3d" opacity=".3"/><circle cx="${sx}" cy="${sy}" r="8" fill="#fff" stroke="#ff4d3d" stroke-width="4"/>`;
-      h += `<rect x="${lx}" y="${ly}" width="266" height="52" rx="4" fill="#160b05e6" stroke="#ff8a2a" stroke-width="1.5"/><text x="${lx + 12}" y="${ly + 22}" fill="#ffb347" font-size="22" font-weight="700">ตำแหน่งปัจจุบัน</text><text x="${lx + 12}" y="${ly + 43}" fill="#ffd9b0" font-size="17">${Math.abs(cur.lat).toFixed(1)}°${cur.lat >= 0 ? 'N' : 'S'} ${Math.abs(cur.lon).toFixed(1)}°${cur.lon >= 0 ? 'E' : 'W'} · ${cur.h.toFixed(0)} km</text>`;
+      h += `<rect x="${lx}" y="${ly}" width="266" height="52" rx="4" fill="#160b05e6" stroke="#ff8a2a" stroke-width="1.5"/><text x="${lx + 12}" y="${ly + 22}" fill="#ffb347" font-size="22" font-weight="700">${st.modelBelow ? 'ตำแหน่งตาม TLE (ถ้ายังโคจร)' : 'ตำแหน่งปัจจุบัน'}</text><text x="${lx + 12}" y="${ly + 43}" fill="#ffd9b0" font-size="17">${Math.abs(cur.lat).toFixed(1)}°${cur.lat >= 0 ? 'N' : 'S'} ${Math.abs(cur.lon).toFixed(1)}°${cur.lon >= 0 ? 'E' : 'W'} · ${cur.h.toFixed(0)} km</text>`;
     }
     $('mapLayer').innerHTML = h;
     const half = (fc.win[2] - fc.win[0]) / 2 / 36e5;
@@ -539,6 +539,7 @@ table.lt a{color:#7fe7ff}
     const now = Date.now(), ph = st.phase || phaseOf(altNow(now)), half = (fc.win[2] - fc.win[0]) / 2 / 36e5;
     const left = fc.eta - now, badge = $('badge');
     if (st.decayed) { badge.className = 'badge ok'; badge.innerHTML = `✓ RE-ENTERED <small>กลับเข้าสู่ชั้นบรรยากาศแล้ว (${esc(st.decayed)})</small>`; }
+    else if (st.modelBelow) { badge.className = 'badge crit'; badge.innerHTML = `⚠ AWAITING CONFIRMATION<small>แบบจำลองคาดว่าตกแล้ว · รอยืนยันจาก USSPACECOM</small>`; }
     else if (ph >= 3 || left < 864e5) { badge.className = 'badge crit'; badge.innerHTML = `⚠ RE-ENTRY IMMINENT<small>ใกล้กลับเข้าสู่ชั้นบรรยากาศ</small>`; }
     else badge.className = 'badge', badge.innerHTML = `⚠ RE-ENTRY WATCH<small>เฝ้าระวังการกลับเข้าสู่ชั้นบรรยากาศ</small>`;
     if (!st.decayed) {
@@ -549,8 +550,8 @@ table.lt a{color:#7fe7ff}
     const tips = Array.isArray(st.official.tip) ? st.official.tip : [], sat = st.news && st.news.satnogs;
     const tipTxt = tips.length ? `${esc(tips[0].DECAY_EPOCH || '')} UTC (ออก ${esc(tips[0].MSG_EPOCH || '')})` : 'ยังไม่มี';
     const rows = [
-      ['ระยะปัจจุบัน', `ระยะที่ ${ph} · ${PH[ph]}`, 'hl'],
-      ['ความสูงขณะนี้ (ประมาณ)', `${(st.alt || 0).toFixed(0)} km`],
+      ['ระยะปัจจุบัน', st.modelBelow ? `ระยะที่ 4 ตามแบบจำลอง · รอยืนยัน` : `ระยะที่ ${ph} · ${PH[ph]}`, 'hl'],
+      ['ความสูงขณะนี้ (ประมาณ)', st.modelBelow ? 'ต่ำกว่า 120 km ตามแบบจำลอง' : `${(st.alt || 0).toFixed(0)} km`],
       ['เวลาคาดว่าจะตก', `${thDate(fc.eta)}`, 'hl'],
       ['ช่วงเวลา (90%)', `${thDate(fc.win[0])} – ${thDate(fc.win[2])}`],
       ['ความเชื่อมั่น', `${conf[0]} (±${half.toFixed(0)} ชม.)`, conf[1]],
@@ -562,7 +563,7 @@ table.lt a{color:#7fe7ff}
     const rate = fc.rateModel ? Math.abs(fc.rateModel) : null, a = [];
     if (st.decayed) a.push(`NAPA-1 กลับเข้าสู่ชั้นบรรยากาศแล้ว ตามประกาศ ${esc(st.decayed)}`);
     else {
-      a.push(`NAPA-1 อยู่ใน<b>ระยะที่ ${ph} ${PH[ph]}</b> สูงประมาณ ${(st.alt || 0).toFixed(0)} km${rate ? ` ลดลงวันละ ~${rate.toFixed(1)} km` : ''}`);
+      a.push(st.modelBelow ? `แบบจำลองคาดว่า NAPA-1 <b>น่าจะกลับเข้าสู่ชั้นบรรยากาศแล้ว</b> แต่<b>ยังไม่มีการยืนยัน</b> (TLE ล่าสุด ${thDate(el.epoch)} สูง ~${((el.perigee + el.apogee) / 2).toFixed(0)} km)` : `NAPA-1 อยู่ใน<b>ระยะที่ ${ph} ${PH[ph]}</b> สูงประมาณ ${(st.alt || 0).toFixed(0)} km${rate ? ` ลดลงวันละ ~${rate.toFixed(1)} km` : ''}`);
       a.push(`คาดว่าจะตก <b>${thDayShort(fc.eta)} ${partOfDay(fc.eta)}</b> (ช่วง ${thDayShort(fc.win[0])} – ${thDayShort(fc.win[2])})`);
       a.push(half > 6 ? `ยังระบุจุดตกไม่ได้ · โอกาสตกในพื้นที่ไทยประมาณ ${Math.max(st.thPct || 0, 0.1).toFixed(1)}%` : `เริ่มเห็นแนวจุดตก — ติดตามแผนที่อย่างใกล้ชิด`);
       a.push(`ดาวเทียมขนาดเล็ก (6U) คาดว่าเผาไหม้หมดในชั้นบรรยากาศ · ความเชื่อมั่นจะสูงขึ้นใน 6 ชม. สุดท้าย`);

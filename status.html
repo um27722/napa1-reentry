@@ -413,7 +413,7 @@ table.lt a{color:#7fe7ff}
   }
 
   async function load() {
-    const [tle, aps, wx, status, news, official, obslog, runlog] = await Promise.all(['tle', 'apsis', 'wx', 'status', 'news', 'official', 'obs_log', 'runlog'].map(n => getJSON('data/' + n + '.json')));
+    const [tle, aps, wx, status, news, official, obslog, runlog, gc] = await Promise.all(['tle', 'apsis', 'wx', 'status', 'news', 'official', 'obs_log', 'runlog', 'ground_contacts'].map(n => getJSON('data/' + n + '.json')));
     if (!Array.isArray(tle) || !tle.length) { $('upd').textContent = 'ไม่พบไฟล์ข้อมูล'; return; }
     const els = []; for (const t of tle) { try { if (/^1 /.test(t.l1) && /^2 /.test(t.l2)) els.push(E.parseTLE(t.l1, t.l2, 'NAPA-1')); } catch (e) { } }
     els.sort((a, b) => a.epoch - b.epoch);
@@ -427,7 +427,7 @@ table.lt a{color:#7fe7ff}
     const fit = []; for (const h of hist.filter(h => h.epoch > el.epoch - 7 * 864e5 && h.epoch <= el.epoch)) { if (!fit.length || h.a <= fit[fit.length - 1].a + 0.3) fit.push(h); }
     const method = fit.length >= 3 && (fit[fit.length - 1].epoch - fit[0].epoch) > 1.5 * 864e5 ? 'history' : 'ndot';
     const fc = E.forecast(el, { f107: w.f107, f81: w.f81, kp: w.kp, method, hist: fit, TinfAt, runs: 800, stopAlt: 120 });
-    Object.assign(st, { obslog: obslog || { obs: {} }, runlog: runlog || [], TinfAt, el, els, hist, fc, w, status: status || {}, news: news || {}, official: official || {}, satrec: S.twoline2satrec(el.l1, el.l2) });
+    Object.assign(st, { gc: (gc && Array.isArray(gc.contacts)) ? gc.contacts.slice().sort((a, b) => Date.parse(b.time) - Date.parse(a.time)) : [], obslog: obslog || { obs: {} }, runlog: runlog || [], TinfAt, el, els, hist, fc, w, status: status || {}, news: news || {}, official: official || {}, satrec: S.twoline2satrec(el.l1, el.l2) });
     st.pm = G.buildPhaseModel(S, st.satrec, el.epoch, el.n);
     st.decayed = (status && status.decay_date) || (official && Array.isArray(official.decay) && official.decay.length ? (official.decay[0].DECAY_EPOCH || 'confirmed') : null);
     st.loaded = Date.now();
@@ -556,6 +556,7 @@ table.lt a{color:#7fe7ff}
       ['ช่วงเวลา (90%)', `${thDate(fc.win[0])} – ${thDate(fc.win[2])}`],
       ['ความเชื่อมั่น', `${conf[0]} (±${half.toFixed(0)} ชม.)`, conf[1]],
       ['ข้อมูลวงโคจรล่าสุด (TLE)', thDate(el.epoch)],
+      ['สถานี ศปอว.ทอ. รับสัญญาณล่าสุด', st.gc.length ? thDate(Date.parse(st.gc[0].time)) + ` · ${esc(st.gc[0].callsign || '')} FCS ${esc(st.gc[0].fcs || '')}` : 'ไม่มีบันทึก', st.gc.length ? 'ok' : ''],
       ['SatNOGS เห็นสัญญาณล่าสุด', sat && sat.last_good ? thDate(Date.parse(sat.last_good)) + ' · ' + esc(sat.station || '') : 'ไม่มีข้อมูล', sat && sat.last_good ? 'ok' : ''],
       ['SatNOGS ถอดรหัสได้ล่าสุด', sat && sat.last_decoded ? thDate(Date.parse(sat.last_decoded)) + ' · ' + esc(sat.decoded_station || '') : 'ไม่มีข้อมูล'],
       ['ประกาศ TIP ล่าสุด', tipTxt]
@@ -595,9 +596,11 @@ table.lt a{color:#7fe7ff}
       const eta = etaFor(e), rate = Math.abs(E.obsRateNdot(e));
       return `<tr class="${i === 0 ? 'n' : ''}"><td>${thDate(e.epoch)}${i === 0 ? ' <b style="color:#ffb347">ล่าสุด</b>' : ''}</td><td>${((e.perigee + e.apogee) / 2).toFixed(1)} km</td><td>${rate.toFixed(1)} km</td><td>${eta ? thDate(eta) : '—'}</td></tr>`;
     }).join('');
-    const obs = Object.values((st.obslog && st.obslog.obs) || {}).filter(o => o.end && Date.parse(o.end) < Date.now()).sort((a, b) => Date.parse(b.end) - Date.parse(a.end)).slice(0, 80);
+    const own = st.gc.map(c => ({ end: c.time, start: c.time, station: c.station, lat: null, lng: null, status: 'good', frames: c.frames, max_alt: c.elevation_deg, url: '#', own: true, callsign: c.callsign }));
+    const obs = own.concat(Object.values((st.obslog && st.obslog.obs) || {})).filter(o => o.end && Date.parse(o.end) < Date.now()).sort((a, b) => Date.parse(b.end) - Date.parse(a.end)).slice(0, 80);
     $('obsLog').innerHTML = '<tr><th>เวลา (ไทย)</th><th>สถานี</th><th>สถานะ</th><th>frame</th><th>มุมเงยสูงสุด (SatNOGS / คำนวณจาก TLE ช่วงนั้น)</th></tr>' + (obs.length ? obs.map(o => {
-      const ev = elevAt(o), cls = o.status === 'good' ? 'g' : 'b';
+      const ev = o.own ? null : elevAt(o), cls = o.status === 'good' ? 'g' : 'b';
+      if (o.own) return `<tr class="g" style="background:#0d2a1f"><td>${thDate(Date.parse(o.end))}</td><td><b style="color:#4fe0a6">${esc(o.station)}</b><br><small style="color:#6f94ad">${esc(o.callsign || '')} · FCS GOOD</small></td><td class="st-good">decoded</td><td>${o.frames || 0}</td><td>${o.max_alt != null ? Math.round(o.max_alt) + '°' : '—'} / —</td></tr>`;
       return `<tr class="${cls}"><td><a href="${esc(o.url)}" target="_blank" rel="noopener">${thDate(Date.parse(o.end))}</a></td><td>${esc(o.station)}<br><small style="color:#6f94ad">${(+o.lat).toFixed(1)}, ${(+o.lng).toFixed(1)}</small></td><td class="st-${esc(o.status)}">${esc(o.status)}</td><td>${o.frames || 0}</td><td>${o.max_alt != null ? Math.round(o.max_alt) + '°' : '—'} / ${ev == null ? '—' : (ev > 0 ? `<span style="color:#4fe0a6">${ev.toFixed(0)}°</span>` : `<span style="color:#ff8a7a">${ev.toFixed(0)}°</span>`)}</td></tr>`;
     }).join('') : '<tr><td colspan="5" style="color:#6f94ad">ยังไม่มีบันทึก (เริ่มเก็บตั้งแต่รอบอัปเดตถัดไป)</td></tr>');
   }

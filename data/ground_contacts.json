@@ -1,0 +1,20 @@
+{
+ "_note": "บันทึกการรับสัญญาณของสถานีภาคพื้นดิน ศปอว.ทอ. (กรอกเอง — สคริปต์อัตโนมัติไม่แก้ไฟล์นี้) เวลาเป็น UTC",
+ "contacts": [
+  {
+   "time": "2026-11-01T16:06:38Z",
+   "station": "สถานีภาคพื้นดิน ศปอว.ทอ.",
+   "freq_mhz": 401.125,
+   "mode": "BPSK-G3RUH 1200 bps",
+   "frames": 4,
+   "fcs": "GOOD",
+   "callsign": "RTAF-1",
+   "rssi_dbm": -109.2,
+   "sat_lat": 12.12,
+   "sat_lon": 103.05,
+   "sat_alt_km": 178.21,
+   "elevation_deg": 26.19,
+   "note": "ถอดรหัสได้ FROM RTAF-1 TO RTAF-0, FCS GOOD (ภาพหน้าจอ ISIS GS 23:06 น.)"
+  }
+ ]
+}

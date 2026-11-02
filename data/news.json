@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-02T00:55:21Z",
+ "updated": "2026-11-02T01:10:31Z",
  "items": [],
  "satnogs": {
-  "last_good": "2026-11-02T00:54:39Z",
-  "station": "Jim UHF 3",
-  "url": "https://network.satnogs.org/observations/15338154/"
+  "last_good": "2026-11-02T01:05:46Z",
+  "station": "ka6akh-ground-station",
+  "url": "https://network.satnogs.org/observations/15333334/"
  }
 }

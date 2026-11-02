@@ -9,7 +9,7 @@
    "lng": -111.9054,
    "status": "future",
    "max_alt": 38.0,
-   "frames": 1,
+   "frames": 6,
    "url": "https://network.satnogs.org/observations/15332811/"
   },
   "15333334": {
@@ -899,7 +899,31 @@
    "max_alt": 67.0,
    "frames": 0,
    "url": "https://network.satnogs.org/observations/15333330/"
+  },
+  "15338705": {
+   "id": 15338705,
+   "start": "2026-11-02T01:10:02Z",
+   "end": "2026-11-02T01:13:02Z",
+   "station": "(¯`·._.·(¯`·._.· I LOVE BALI ·._.·´¯)·._.·´¯)",
+   "lat": -8.7356,
+   "lng": 115.1948,
+   "status": "future",
+   "max_alt": 48.0,
+   "frames": 1,
+   "url": "https://network.satnogs.org/observations/15338705/"
+  },
+  "15339020": {
+   "id": 15339020,
+   "start": "2026-11-02T01:08:08Z",
+   "end": "2026-11-02T01:18:36Z",
+   "station": "N5ZKK-UHF-HELICAL",
+   "lat": 30.05973,
+   "lng": -99.15139,
+   "status": "future",
+   "max_alt": 57.0,
+   "frames": 6,
+   "url": "https://network.satnogs.org/observations/15339020/"
   }
  },
- "updated": "2026-11-02T01:11:34Z"
+ "updated": "2026-11-02T01:12:34Z"
 }

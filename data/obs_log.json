@@ -144,18 +144,6 @@
    "frames": 9,
    "url": "https://network.satnogs.org/observations/15135613/"
   },
-  "15112503": {
-   "id": 15112503,
-   "start": "2026-10-03T15:29:12Z",
-   "end": "2026-10-03T15:34:15Z",
-   "station": "RayaanVK6ADX",
-   "lat": -32.1543,
-   "lng": 115.9773,
-   "status": "good",
-   "max_alt": 74.0,
-   "frames": 30,
-   "url": "https://network.satnogs.org/observations/15112503/"
-  },
   "15259935": {
    "id": 15259935,
    "start": "2026-10-21T21:29:30Z",
@@ -182,5 +170,5 @@
   }
  },
  "v": 2,
- "updated": "2026-11-02T10:02:15Z"
+ "updated": "2026-11-02T16:53:27Z"
 }

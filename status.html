@@ -144,7 +144,7 @@ table.lt a{color:#7fe7ff}
  <section class="pn logp" style="margin-top:12px">
   <h2><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>EVENT LOG <small>บันทึกเหตุการณ์ (เก็บอัตโนมัติทุกรอบ)</small></h2>
   <div class="loggrid"><div><div class="logh">ข้อมูลวงโคจร (TLE) แต่ละชุด และเวลาคาดตกที่คำนวณได้ ณ ขณะนั้น</div><div class="tblwrap"><table class="lt" id="tleLog"></table></div></div>
-  <div><div class="logh">การรับสัญญาณ NAPA-1 ของเครือข่าย SatNOGS</div><div class="tblwrap"><table class="lt" id="obsLog"></table></div><div class="note">good = ถอดรหัสได้ (ยังไม่ผ่านการตรวจโดยคน) · bad = ไม่พบสัญญาณ · ตำแหน่งสถานีเทียบกับวงโคจรคำนวณจาก TLE ล่าสุด</div></div></div>
+  <div><div class="logh">การรับสัญญาณ NAPA-1 ของเครือข่าย SatNOGS</div><div class="tblwrap"><table class="lt" id="obsLog"></table></div><div class="note">good = เห็นสัญญาณใน waterfall (frame &gt; 0 = ถอดรหัสได้) · bad = ไม่พบสัญญาณ · มุมเงยคำนวณจาก TLE ที่ใช้ได้ ณ เวลานั้น (ค่าบวก = ดาวเทียมอยู่เหนือสถานีจริง)</div></div></div>
  </section>
  <footer class="foot"><span>ข้อมูล: Space-Track (USSPACECOM) · CelesTrak · SatNOGS · NOAA SWPC · อัปเดตอัตโนมัติทุก 2 ชม. · หน้านี้โหลดข้อมูลใหม่ทุก 10 นาที</span><span>ค่าพยากรณ์เชิงวิศวกรรม — ใช้คู่กับประกาศทางการ (TIP / Decay)</span></footer>
 </div>
@@ -556,7 +556,8 @@ table.lt a{color:#7fe7ff}
       ['ช่วงเวลา (90%)', `${thDate(fc.win[0])} – ${thDate(fc.win[2])}`],
       ['ความเชื่อมั่น', `${conf[0]} (±${half.toFixed(0)} ชม.)`, conf[1]],
       ['ข้อมูลวงโคจรล่าสุด (TLE)', thDate(el.epoch)],
-      ['SatNOGS ถอดรหัสสัญญาณได้ล่าสุด', sat && sat.last_decoded ? thDate(Date.parse(sat.last_decoded)) + ' · ' + esc(sat.decoded_station || '') : 'ไม่มีข้อมูล', sat && sat.last_decoded ? 'ok' : ''],
+      ['SatNOGS เห็นสัญญาณล่าสุด', sat && sat.last_good ? thDate(Date.parse(sat.last_good)) + ' · ' + esc(sat.station || '') : 'ไม่มีข้อมูล', sat && sat.last_good ? 'ok' : ''],
+      ['SatNOGS ถอดรหัสได้ล่าสุด', sat && sat.last_decoded ? thDate(Date.parse(sat.last_decoded)) + ' · ' + esc(sat.decoded_station || '') : 'ไม่มีข้อมูล'],
       ['ประกาศ TIP ล่าสุด', tipTxt]
     ];
     $('rows').innerHTML = rows.map(r => `<div class="row"><span>${r[0]}</span><b class="${r[2] || ''}">${r[1]}</b></div>`).join('') ;
@@ -582,7 +583,10 @@ table.lt a{color:#7fe7ff}
     return (etaCache[k] = fc.error ? null : fc.eta);
   }
   function elevAt(o) {
-    try { const d = new Date((Date.parse(o.start) + Date.parse(o.end)) / 2), pv = S.propagate(st.satrec, d); if (!pv || !pv.position) return null;
+    try { const d = new Date((Date.parse(o.start) + Date.parse(o.end)) / 2), prior = st.els.filter(e => e.epoch <= d.getTime()), e0 = prior.length ? prior[prior.length - 1] : st.els[0];
+      const sr = S.twoline2satrec(e0.l1, e0.l2); let best = -90;
+      for (let k = -150; k <= 150; k += 15) { const dd = new Date(d.getTime() + k * 1000), pv = S.propagate(sr, dd); if (!pv || !pv.position) continue; const la = S.ecfToLookAngles({ latitude: o.lat * Math.PI / 180, longitude: o.lng * Math.PI / 180, height: 0 }, S.eciToEcf(pv.position, S.gstime(dd))); best = Math.max(best, la.elevation * 180 / Math.PI); }
+      return best; const pv = null; if (!pv || !pv.position) return null;
       const la = S.ecfToLookAngles({ latitude: o.lat * Math.PI / 180, longitude: o.lng * Math.PI / 180, height: 0 }, S.eciToEcf(pv.position, S.gstime(d))); return la.elevation * 180 / Math.PI; } catch (e) { return null; }
   }
   function renderLog() {
@@ -592,7 +596,7 @@ table.lt a{color:#7fe7ff}
       return `<tr class="${i === 0 ? 'n' : ''}"><td>${thDate(e.epoch)}${i === 0 ? ' <b style="color:#ffb347">ล่าสุด</b>' : ''}</td><td>${((e.perigee + e.apogee) / 2).toFixed(1)} km</td><td>${rate.toFixed(1)} km</td><td>${eta ? thDate(eta) : '—'}</td></tr>`;
     }).join('');
     const obs = Object.values((st.obslog && st.obslog.obs) || {}).filter(o => o.end && Date.parse(o.end) < Date.now()).sort((a, b) => Date.parse(b.end) - Date.parse(a.end)).slice(0, 80);
-    $('obsLog').innerHTML = '<tr><th>เวลา (ไทย)</th><th>สถานี</th><th>สถานะ</th><th>frame</th><th>มุมเงย (sched / TLE)</th></tr>' + (obs.length ? obs.map(o => {
+    $('obsLog').innerHTML = '<tr><th>เวลา (ไทย)</th><th>สถานี</th><th>สถานะ</th><th>frame</th><th>มุมเงยสูงสุด (SatNOGS / คำนวณจาก TLE ช่วงนั้น)</th></tr>' + (obs.length ? obs.map(o => {
       const ev = elevAt(o), cls = o.status === 'good' ? 'g' : 'b';
       return `<tr class="${cls}"><td><a href="${esc(o.url)}" target="_blank" rel="noopener">${thDate(Date.parse(o.end))}</a></td><td>${esc(o.station)}<br><small style="color:#6f94ad">${(+o.lat).toFixed(1)}, ${(+o.lng).toFixed(1)}</small></td><td class="st-${esc(o.status)}">${esc(o.status)}</td><td>${o.frames || 0}</td><td>${o.max_alt != null ? Math.round(o.max_alt) + '°' : '—'} / ${ev == null ? '—' : (ev > 0 ? `<span style="color:#4fe0a6">${ev.toFixed(0)}°</span>` : `<span style="color:#ff8a7a">${ev.toFixed(0)}°</span>`)}</td></tr>`;
     }).join('') : '<tr><td colspan="5" style="color:#6f94ad">ยังไม่มีบันทึก (เริ่มเก็บตั้งแต่รอบอัปเดตถัดไป)</td></tr>');

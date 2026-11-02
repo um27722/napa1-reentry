@@ -427,7 +427,8 @@ table.lt a{color:#7fe7ff}
     const fit = []; for (const h of hist.filter(h => h.epoch > el.epoch - 7 * 864e5 && h.epoch <= el.epoch)) { if (!fit.length || h.a <= fit[fit.length - 1].a + 0.3) fit.push(h); }
     const method = fit.length >= 3 && (fit[fit.length - 1].epoch - fit[0].epoch) > 1.5 * 864e5 ? 'history' : 'ndot';
     const fc = E.forecast(el, { f107: w.f107, f81: w.f81, kp: w.kp, method, hist: fit, TinfAt, runs: 800, stopAlt: 120 });
-    Object.assign(st, { gc: (gc && Array.isArray(gc.contacts)) ? gc.contacts.slice().sort((a, b) => Date.parse(b.time) - Date.parse(a.time)) : [], obslog: obslog || { obs: {} }, runlog: runlog || [], TinfAt, el, els, hist, fc, w, status: status || {}, news: news || {}, official: official || {}, satrec: S.twoline2satrec(el.l1, el.l2) });
+    const gcs = (gc && Array.isArray(gc.contacts)) ? gc.contacts.slice().sort((a, b) => Date.parse(b.time) - Date.parse(a.time)) : [];
+    Object.assign(st, { gc: gcs, gcGood: gcs.filter(c => c.result !== 'no_signal'), gcMiss: gcs.length && gcs[0].result === 'no_signal' ? gcs[0] : null, obslog: obslog || { obs: {} }, runlog: runlog || [], TinfAt, el, els, hist, fc, w, status: status || {}, news: news || {}, official: official || {}, satrec: S.twoline2satrec(el.l1, el.l2) });
     st.pm = G.buildPhaseModel(S, st.satrec, el.epoch, el.n);
     st.decayed = (status && status.decay_date) || (official && Array.isArray(official.decay) && official.decay.length ? (official.decay[0].DECAY_EPOCH || 'confirmed') : null);
     st.loaded = Date.now();
@@ -539,7 +540,7 @@ table.lt a{color:#7fe7ff}
     const now = Date.now(), ph = st.phase || phaseOf(altNow(now)), half = (fc.win[2] - fc.win[0]) / 2 / 36e5;
     const left = fc.eta - now, badge = $('badge');
     if (st.decayed) { badge.className = 'badge ok'; badge.innerHTML = `✓ RE-ENTERED <small>กลับเข้าสู่ชั้นบรรยากาศแล้ว (${esc(st.decayed)})</small>`; }
-    else if (st.modelBelow) { badge.className = 'badge crit'; badge.innerHTML = `⚠ AWAITING CONFIRMATION<small>แบบจำลองคาดว่าตกแล้ว · รอยืนยันจาก USSPACECOM</small>`; }
+    else if (st.modelBelow) { badge.className = 'badge crit'; badge.innerHTML = st.gcMiss ? `⚠ LIKELY RE-ENTERED<small>แบบจำลองคาดว่าตกแล้ว + รอบผ่าน ศปอว.ทอ. ไม่มีสัญญาณ · รอยืนยันจาก USSPACECOM</small>` : `⚠ AWAITING CONFIRMATION<small>แบบจำลองคาดว่าตกแล้ว · รอยืนยันจาก USSPACECOM</small>`; }
     else if (ph >= 3 || left < 864e5) { badge.className = 'badge crit'; badge.innerHTML = `⚠ RE-ENTRY IMMINENT<small>ใกล้กลับเข้าสู่ชั้นบรรยากาศ</small>`; }
     else badge.className = 'badge', badge.innerHTML = `⚠ RE-ENTRY WATCH<small>เฝ้าระวังการกลับเข้าสู่ชั้นบรรยากาศ</small>`;
     if (!st.decayed) {
@@ -556,7 +557,8 @@ table.lt a{color:#7fe7ff}
       ['ช่วงเวลา (90%)', `${thDate(fc.win[0])} – ${thDate(fc.win[2])}`],
       ['ความเชื่อมั่น', `${conf[0]} (±${half.toFixed(0)} ชม.)`, conf[1]],
       ['ข้อมูลวงโคจรล่าสุด (TLE)', thDate(el.epoch)],
-      ['สถานี ศปอว.ทอ. รับสัญญาณล่าสุด', st.gc.length ? thDate(Date.parse(st.gc[0].time)) + ` · ${esc(st.gc[0].callsign || '')} FCS ${esc(st.gc[0].fcs || '')}` : 'ไม่มีบันทึก', st.gc.length ? 'ok' : ''],
+      ['สถานี ศปอว.ทอ. รับสัญญาณล่าสุด', st.gcGood.length ? thDate(Date.parse(st.gcGood[0].time)) + ` · ${esc(st.gcGood[0].callsign || '')} FCS ${esc(st.gcGood[0].fcs || '')}` : 'ไม่มีบันทึก', st.gcGood.length ? 'ok' : ''],
+      ...(st.gcMiss ? [['รอบผ่าน ศปอว.ทอ. ล่าสุด', `${thDate(Date.parse(st.gcMiss.time))} · ${esc(st.gcMiss.pass_name || '')} · ไม่มีสัญญาณ (สถานีปกติ)`, 'hl']] : []),
       ['SatNOGS เห็นสัญญาณล่าสุด', sat && sat.last_good ? thDate(Date.parse(sat.last_good)) + ' · ' + esc(sat.station || '') : 'ไม่มีข้อมูล', sat && sat.last_good ? 'ok' : ''],
       ['SatNOGS ถอดรหัสได้ล่าสุด', sat && sat.last_decoded ? thDate(Date.parse(sat.last_decoded)) + ' · ' + esc(sat.decoded_station || '') : 'ไม่มีข้อมูล'],
       ['ประกาศ TIP ล่าสุด', tipTxt]
@@ -566,6 +568,7 @@ table.lt a{color:#7fe7ff}
     if (st.decayed) a.push(`NAPA-1 กลับเข้าสู่ชั้นบรรยากาศแล้ว ตามประกาศ ${esc(st.decayed)}`);
     else {
       a.push(st.modelBelow ? `แบบจำลองคาดว่า NAPA-1 <b>น่าจะกลับเข้าสู่ชั้นบรรยากาศแล้ว</b> แต่<b>ยังไม่มีการยืนยัน</b> (TLE ล่าสุด ${thDate(el.epoch)} สูง ~${((el.perigee + el.apogee) / 2).toFixed(0)} km)` : `NAPA-1 อยู่ใน<b>ระยะที่ ${ph} ${PH[ph]}</b> สูงประมาณ ${(st.alt || 0).toFixed(0)} km${rate ? ` ลดลงวันละ ~${rate.toFixed(1)} km` : ''}`);
+      if (st.gcMiss) a.push(`<b>สถานี ศปอว.ทอ. ไม่ได้รับสัญญาณ</b> ในรอบผ่าน ${esc(st.gcMiss.pass_name || '')} ${thDate(Date.parse(st.gcMiss.time))} ทั้งที่สถานีทำงานปกติ — สนับสนุนว่าดาวเทียมกลับเข้าสู่ชั้นบรรยากาศแล้ว`);
       a.push(`คาดว่าจะตก <b>${thDayShort(fc.eta)} ${partOfDay(fc.eta)}</b> (ช่วง ${thDayShort(fc.win[0])} – ${thDayShort(fc.win[2])})`);
       a.push(half > 6 ? `ยังระบุจุดตกไม่ได้ · โอกาสตกในพื้นที่ไทยประมาณ ${Math.max(st.thPct || 0, 0.1).toFixed(1)}%` : `เริ่มเห็นแนวจุดตก — ติดตามแผนที่อย่างใกล้ชิด`);
       a.push(`ดาวเทียมขนาดเล็ก (6U) คาดว่าเผาไหม้หมดในชั้นบรรยากาศ · ความเชื่อมั่นจะสูงขึ้นใน 6 ชม. สุดท้าย`);
@@ -596,10 +599,11 @@ table.lt a{color:#7fe7ff}
       const eta = etaFor(e), rate = Math.abs(E.obsRateNdot(e));
       return `<tr class="${i === 0 ? 'n' : ''}"><td>${thDate(e.epoch)}${i === 0 ? ' <b style="color:#ffb347">ล่าสุด</b>' : ''}</td><td>${((e.perigee + e.apogee) / 2).toFixed(1)} km</td><td>${rate.toFixed(1)} km</td><td>${eta ? thDate(eta) : '—'}</td></tr>`;
     }).join('');
-    const own = st.gc.map(c => ({ end: c.time, start: c.time, station: c.station, lat: null, lng: null, status: 'good', frames: c.frames, max_alt: c.elevation_deg, url: '#', own: true, callsign: c.callsign }));
+    const own = st.gc.map(c => ({ end: c.time, start: c.time, station: c.station, lat: null, lng: null, status: c.result === 'no_signal' ? 'failed' : 'good', miss: c.result === 'no_signal', pass: c.pass_name, frames: c.frames, max_alt: c.elevation_deg, url: '#', own: true, callsign: c.callsign }));
     const obs = own.concat(Object.values((st.obslog && st.obslog.obs) || {})).filter(o => o.end && Date.parse(o.end) < Date.now()).sort((a, b) => Date.parse(b.end) - Date.parse(a.end)).slice(0, 80);
     $('obsLog').innerHTML = '<tr><th>เวลา (ไทย)</th><th>สถานี</th><th>สถานะ</th><th>frame</th><th>มุมเงยสูงสุด (SatNOGS / คำนวณจาก TLE ช่วงนั้น)</th></tr>' + (obs.length ? obs.map(o => {
       const ev = o.own ? null : elevAt(o), cls = o.status === 'good' ? 'g' : 'b';
+      if (o.own && o.miss) return `<tr class="b" style="background:#2e0a07"><td>${thDate(Date.parse(o.end))}</td><td><b style="color:#ff8a7a">${esc(o.station)}</b><br><small style="color:#6f94ad">${esc(o.pass || '')} · No sync</small></td><td class="st-failed">ไม่มีสัญญาณ</td><td>0</td><td>— / —</td></tr>`;
       if (o.own) return `<tr class="g" style="background:#0d2a1f"><td>${thDate(Date.parse(o.end))}</td><td><b style="color:#4fe0a6">${esc(o.station)}</b><br><small style="color:#6f94ad">${esc(o.callsign || '')} · FCS GOOD</small></td><td class="st-good">decoded</td><td>${o.frames || 0}</td><td>${o.max_alt != null ? Math.round(o.max_alt) + '°' : '—'} / —</td></tr>`;
       return `<tr class="${cls}"><td><a href="${esc(o.url)}" target="_blank" rel="noopener">${thDate(Date.parse(o.end))}</a></td><td>${esc(o.station)}<br><small style="color:#6f94ad">${(+o.lat).toFixed(1)}, ${(+o.lng).toFixed(1)}</small></td><td class="st-${esc(o.status)}">${esc(o.status)}</td><td>${o.frames || 0}</td><td>${o.max_alt != null ? Math.round(o.max_alt) + '°' : '—'} / ${ev == null ? '—' : (ev > 0 ? `<span style="color:#4fe0a6">${ev.toFixed(0)}°</span>` : `<span style="color:#ff8a7a">${ev.toFixed(0)}°</span>`)}</td></tr>`;
     }).join('') : '<tr><td colspan="5" style="color:#6f94ad">ยังไม่มีบันทึก (เริ่มเก็บตั้งแต่รอบอัปเดตถัดไป)</td></tr>');

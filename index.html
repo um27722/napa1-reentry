@@ -726,7 +726,9 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
     lines.push(`<li><b>ประกาศทางการ:</b> ${dec.length ? `มีประกาศยืนยันการตกจาก USSPACECOM (${esc(dec[0].DECAY_EPOCH || dec[0].MSG_EPOCH || '')})` : tips.length ? `มี TIP ล่าสุดคาดตก ${esc(tips[0].DECAY_EPOCH || '')} UTC ที่ ${esc(tips[0].LAT || '?')}, ${esc(tips[0].LON || '?')}` : 'ยังไม่มีประกาศจาก USSPACECOM (ดาวเทียมเล็กกว่า 1 m² อาจไม่มี TIP มีเพียงประกาศหลังตก)'}</li>`);
     if (b.kp >= 5) lines.push(`<li><b>สภาพอวกาศ:</b> มีพายุแม่เหล็กโลก (Kp ${b.kp}) อาจทำให้ตกเร็วกว่าที่คาด</li>`);
     const sat = stat.news && stat.news.satnogs;
-    if (stat.gc && stat.gc.length) lines.push(`<li><b>สถานี ศปอว.ทอ.:</b> รับและถอดรหัสสัญญาณ NAPA-1 ได้ล่าสุด ${thDate(Date.parse(stat.gc[0].time))} (FCS GOOD)</li>`);
+    const gGood = (stat.gc || []).filter(c => c.result !== 'no_signal'), gMiss = stat.gc && stat.gc.length && stat.gc[0].result === 'no_signal' ? stat.gc[0] : null;
+    if (gMiss) lines.push(`<li><b>สถานี ศปอว.ทอ.:</b> รอบผ่าน ${esc(gMiss.pass_name || '')} ${thDate(Date.parse(gMiss.time))} <b>ไม่ได้รับสัญญาณ</b> ทั้งที่สถานีปกติ — สนับสนุนว่าดาวเทียมตกแล้ว</li>`);
+    if (gGood.length) lines.push(`<li><b>สถานี ศปอว.ทอ.:</b> รับและถอดรหัสสัญญาณ NAPA-1 ได้ล่าสุด ${thDate(Date.parse(gGood[0].time))} (FCS GOOD)</li>`);
     if (sat && sat.last_decoded) lines.push(`<li><b>สัญญาณวิทยุ:</b> SatNOGS ถอดรหัสสัญญาณ NAPA-1 ได้ล่าสุด ${thDate(Date.parse(sat.last_decoded))} (สถานี ${esc(sat.decoded_station || '')})</li>`);
     const nn = stat.news && Array.isArray(stat.news.items) ? stat.news.items.length : 0;
     lines.push(`<li><b>ข่าว/การกล่าวถึง:</b> ${nn ? `พบ ${nn} รายการใน 14 วันล่าสุด (ดูแผงข่าวด้านล่าง)` : 'ยังไม่พบข่าวหรือโพสต์ที่พูดถึงการตกของ NAPA-1'}</li>`);

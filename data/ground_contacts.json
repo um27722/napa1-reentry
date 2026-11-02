@@ -13,8 +13,16 @@
    "sat_lat": 12.12,
    "sat_lon": 103.05,
    "sat_alt_km": 178.21,
-   "elevation_deg": 26.19,
-   "note": "ถอดรหัสได้ FROM RTAF-1 TO RTAF-0, FCS GOOD (ภาพหน้าจอ ISIS GS 23:06 น.)"
+   "elevation_deg": 40.49,
+   "note": "รายงานผ่าน NightPass-1 (286/2026) ภารกิจตรวจสถานะสถานีและ beacon: เรียบร้อย · ถอดรหัส FROM RTAF-1 TO RTAF-0, FCS GOOD 23:06:23–23:06:38 น.",
+   "pass_name": "NightPass-1",
+   "pass_no": "286/2026",
+   "aos": "2026-11-01T16:04:55Z",
+   "los": "2026-11-01T16:11:20Z",
+   "max_elevation_deg": 40.49,
+   "tle_epoch": "2026-11-01T07:15:07Z",
+   "alt_at_epoch_km": 184.43,
+   "gs_status": "Normal"
   }
  ]
 }

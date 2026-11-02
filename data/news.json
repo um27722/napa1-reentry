@@ -1,9 +1,12 @@
 {
- "updated": "2026-11-02T01:12:31Z",
+ "updated": "2026-11-02T01:18:41Z",
  "items": [],
  "satnogs": {
-  "last_good": "2026-11-02T01:13:02Z",
-  "station": "(¯`·._.·(¯`·._.· I LOVE BALI ·._.·´¯)·._.·´¯)",
-  "url": "https://network.satnogs.org/observations/15338705/"
+  "last_decoded": "2026-10-29T11:47:33Z",
+  "decoded_station": "M0EYT",
+  "last_good": "2026-10-30T21:30:50Z",
+  "station": "IU0JIW",
+  "url": "https://network.satnogs.org/observations/15328661/",
+  "sat_id": "MPAB-6491-6577-2634-7004"
  }
 }

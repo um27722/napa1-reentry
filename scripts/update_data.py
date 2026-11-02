@@ -93,7 +93,13 @@ if st_user and st_pass:
                 data=urllib.parse.urlencode({"identity": st_user, "password": st_pass}).encode(), headers=UA), timeout=40).read()
         q = (f"https://www.space-track.org/basicspacedata/query/class/gp_history/NORAD_CAT_ID/{NORAD}"
              "/EPOCH/%3Enow-10/orderby/EPOCH%20asc/format/tle/emptyresult/show")
-        add(parse_tle(get(q, 90, op)), "Space-Track gp_history")
+        st_raw = get(q, 90, op)
+        add(parse_tle(st_raw), "Space-Track gp_history")
+        try:  # keep Space-Track's own answer as evidence (separate file, never used for computing)
+            with open(os.path.join(DATA, "spacetrack_gp_history.txt"), "w", encoding="utf-8") as fh:
+                fh.write(f"# Space-Track gp_history NORAD {NORAD}, fetched {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}\n# query: {q}\n" + (st_raw or ""))
+        except Exception as e2:
+            notes.append(f"Space-Track raw save error: {e2}")
         st_op = op
     except Exception as e:
         notes.append(f"Space-Track error: {e}")

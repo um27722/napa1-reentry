@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Re-entry Watch · ติดตามดาวเทียมกลับเข้าสู่ชั้นบรรยากาศ</title>
+<style>
+:root{--bg:#06121f;--panel:#0b1f33;--panel2:#0f2a44;--line:#1f4262;--text:#e6eef6;--muted:#8fa9c0;--accent:#ff8a2a;--red:#ff5a4a;--green:#3fd39a;--amber:#f2b134;--blue:#4ea3ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,"Leelawadee UI","Noto Sans Thai",sans-serif;font-size:14px}
+header{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);background:#081a2c}
+header img{width:46px;height:46px}
+header h1{margin:0;font-size:20px;letter-spacing:.5px}
+header .sub{color:var(--muted);font-size:13px}
+header .sp{flex:1}
+header .upd{color:var(--muted);font-size:12px;text-align:right}
+header a{color:var(--blue)}
+main{padding:16px 20px;max-width:1500px;margin:0 auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.card h3{margin:0 0 2px;font-size:16px;display:flex;justify-content:space-between;gap:8px}
+.card .id{color:var(--muted);font-size:12px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-done{background:#0e3b2c;color:var(--green)}.b-likely{background:#3b1410;color:#ff8a7a}.b-crit{background:#3b2205;color:var(--accent)}.b-watch{background:#10304d;color:var(--blue)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin-top:8px;font-size:13px}
+.kv span{color:var(--muted)}
+.grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.panel h2{margin:0 0 10px;font-size:15px;color:#cfe0ef}
+.panel h2 small{color:var(--muted);font-weight:400}
+.big{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.stat{background:var(--panel2);border-radius:8px;padding:10px 12px}
+.stat .l{color:var(--muted);font-size:12px}
+.stat .v{font-size:22px;font-weight:700;margin:2px 0}
+.stat .s{font-size:12px;color:#c3d5e6}
+.o{color:var(--accent)}.r{color:var(--red)}.g{color:var(--green)}.a{color:var(--amber)}
+svg{display:block;width:100%;height:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600}
+tr.hl td{background:#2a1a08}
+.note{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.5}
+.warn{background:#2b1a06;border:1px solid #6b4310;color:#ffcf8a;padding:8px 10px;border-radius:8px;font-size:13px;margin-bottom:10px}
+code{background:#0a2238;padding:1px 5px;border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<header>
+  <img src="../assets/logo-left.png" alt="ศปอว.ทอ.">
+  <div>
+    <h1>RE-ENTRY WATCH</h1>
+    <div class="sub">ระบบติดตามการกลับเข้าสู่ชั้นบรรยากาศ · หลายเป้าหมาย</div>
+  </div>
+  <div class="sp"></div>
+  <div class="upd"><div id="upd">กำลังโหลด…</div><div><a href="../">NAPA-1 Dashboard</a> · <a href="../status.html">NAPA-1 Status Board</a></div></div>
+  <img src="../assets/logo-right.png" alt="Space ISR Division">
+</header>
+<main>
+  <div class="cards" id="cards"></div>
+  <div class="grid">
+    <div>
+      <div class="panel" id="detail"></div>
+      <div class="panel"><h2 id="mapTitle">แผนที่จุดตกที่เป็นไปได้</h2><div id="map"></div>
+        <div class="legend"><span><i style="background:#9ecae1"></i>ตกเร็ว</span><span><i style="background:#08519c;border:1px solid #9ecae1"></i>ตกช้า</span><span><i style="background:#ff5a4a"></i>จุดคาดตกตาม TIP (USSPACECOM)</span><span><i style="background:transparent;border:2px solid #ff8a2a"></i>ประเทศไทย (เส้นขอบแบบหยาบ)</span><span>เส้นประ = ขอบละติจูดที่วงโคจรผ่านได้</span></div>
+        <div class="note" id="mapNote"></div></div>
+    </div>
+    <div>
+      <div class="panel" id="thai"></div>
+      <div class="panel" id="tip"></div>
+      <div class="panel"><h2>ความสูงวงโคจร <small>(จาก TLE)</small></h2><div id="alt"></div><div id="tleTable"></div></div>
+      <div class="panel"><h2>เพิ่มดาวเทียมที่ติดตาม</h2>
+        <div class="note" style="margin-top:0">แก้ไฟล์ <code>multi/data/targets.json</code> ใน GitHub โดยเพิ่มบรรทัด <code>{"norad": 12345, "name": "ชื่อ"}</code> แล้วกด Commit ระบบจะดึง TLE, TIP และ Decay จาก Space-Track ให้ในรอบอัปเดตถัดไป (ทุก 30 นาที)<br>
+        <a id="editLink" href="https://github.com/um27722/napa1-reentry/edit/main/multi/data/targets.json" target="_blank" rel="noopener" style="color:var(--blue)">เปิดไฟล์ targets.json เพื่อแก้ไข</a></div></div>
+    </div>
+  </div>
+  <div class="note">ข้อมูล: TLE / TIP / Decay / SATCAT จาก Space-Track.org (USSPACECOM) · TLE สำรองจาก CelesTrak · F10.7 และ Kp จาก NOAA SWPC · แบบจำลองแรงต้าน Bates–Walker ปรับค่า B จาก TLE ย้อนหลัง 7 วัน + Monte Carlo · ผลเชิงวิศวกรรม ให้ใช้คู่กับ TIP และประกาศ Decay ของ USSPACECOM · เวลาทั้งหมดเป็นเวลาประเทศไทย (UTC+7)</div>
+</main>
+<script src="vendor/satellite.min.js"></script>
+<script src="vendor/engine.js"></script>
+<script src="vendor/impact.js"></script>
+<script src="vendor/land.js"></script>
+<script>
+(function () {
+  const S = window.satellite, E = window.ReentryEngine, G = window.ImpactGeo, RE = 6378.137;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const TH_MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  const thDate = ms => { const d = new Date(ms + 7 * 36e5); return `${d.getUTCDate()} ${TH_MON[d.getUTCMonth()]} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} น.`; };
+  const hhmm = ms => { const d = new Date(ms + 7 * 36e5); return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
+  const utc = s => { if (!s) return NaN; const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)) : NaN; };
+  const dur = ms => { const neg = ms < 0; ms = Math.abs(ms); const h = Math.floor(ms / 36e5), m = Math.round((ms % 36e5) / 6e4); return (neg ? '-' : '') + (h ? `${h} ชม. ` : '') + `${m} นาที`; };
+  const get = async p => { try { const r = await fetch(p + '?t=' + Date.now(), { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
+
+  // Thailand: coarse border polygon (lon, lat)
+  const TH_POLY = [[99.9, 20.45], [98.9, 19.8], [97.8, 19.6], [97.35, 18.5], [97.75, 17.6], [98.57, 16.7], [98.5, 16.1], [98.2, 15.1], [99.1, 13.8], [99.2, 13.0], [99.6, 11.8], [98.75, 10.4], [98.5, 9.7], [98.3, 8.9], [98.3, 7.9], [99.6, 6.9], [100.4, 6.5], [101.1, 6.2], [102.1, 6.2], [101.3, 6.9], [100.3, 7.6], [99.9, 8.7], [99.2, 9.3], [99.5, 10.6], [99.95, 12.2], [100.0, 13.3], [100.5, 13.5], [100.95, 12.7], [101.5, 12.6], [102.3, 12.2], [102.9, 11.7], [102.6, 12.4], [102.6, 13.6], [103.2, 14.4], [104.8, 14.4], [105.5, 14.3], [105.6, 15.3], [104.8, 16.5], [104.7, 17.4], [103.9, 18.3], [103.0, 17.95], [102.1, 17.9], [101.1, 17.5], [100.9, 18.4], [101.2, 19.6], [100.5, 20.2]];
+  const inTH = (lat, lon) => { if (lat < 5.5 || lat > 20.6 || lon < 97.3 || lon > 105.7) return false; let c = false; for (let i = 0, j = TH_POLY.length - 1; i < TH_POLY.length; j = i++) { const [xi, yi] = TH_POLY[i], [xj, yj] = TH_POLY[j]; if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) c = !c; } return c; };
+
+  const st = { sats: [], wx: null, sel: null, res: {} };
+
+  function prep(s) {
+    const els = []; for (const t of s.tle || []) { try { els.push(E.parseTLE(t.l1, t.l2, s.name)); } catch (e) { } }
+    els.sort((a, b) => a.epoch - b.epoch);
+    return els.filter((e, i) => !i || e.epoch - els[i - 1].epoch > 60e3);
+  }
+  function TinfAt(ms) { const w = st.wx, d = new Date(ms - 864e5).toISOString().slice(0, 10), v = (w.series || {})[d]; return v ? E.exoTemp(v[0], v[1] || w.f81, w.kp) : E.exoTemp(w.f107, w.f81, w.kp); }
+
+  function analyse(s, runs) {
+    const els = prep(s); if (!els.length) return { err: 'ไม่มี TLE' };
+    const el = els[els.length - 1], w = st.wx;
+    const hist = els.map(x => ({ epoch: x.epoch, a: x.a }));
+    const fit = []; for (const h of hist.filter(h => h.epoch > el.epoch - 7 * 864e5 && h.epoch <= el.epoch)) { if (!fit.length || h.a <= fit[fit.length - 1].a + 0.3) fit.push(h); }
+    const method = fit.length >= 3 && (fit[fit.length - 1].epoch - fit[0].epoch) > 1.5 * 864e5 ? 'history' : 'ndot';
+    const fc = E.forecast(el, { f107: w.f107, f81: w.f81, kp: w.kp, method, hist: fit, TinfAt, runs, stopAlt: 120 });
+    const out = { els, el, fc, method, peri: el.perigee, apo: el.apogee, latMax: el.incl <= 90 ? el.incl : 180 - el.incl };
+    if (fc.error) return out;
+    try {
+      const sr = S.twoline2satrec(el.l1, el.l2), pm = G.buildPhaseModel(S, sr, el.epoch, el.n);
+      out.pts = fc.samples.map(q => { const p = G.pointAt(S, pm, q.days, q.uInt); return { t: el.epoch + q.days * 864e5, lat: p.lat, lon: p.lon }; });
+      out.thN = out.pts.filter(p => inTH(p.lat, p.lon)).length;
+    } catch (e) { out.pts = []; }
+    // official messages
+    const dec = (s.decay || []).filter(d => /hist/i.test(d.MSG_TYPE || ''));
+    out.decayed = dec.length ? utc(dec[0].DECAY_EPOCH) : (s.satcat && s.satcat.DECAY ? utc(s.satcat.DECAY + ' 12:00') : null);
+    out.decayRow = dec[0] || null;
+    const tips = (s.tip || []).slice().sort((a, b) => utc(b.MSG_EPOCH) - utc(a.MSG_EPOCH));
+    out.tips = tips; out.tip = tips[0] || null;
+    if (out.tip) { out.tipT = utc(out.tip.DECAY_EPOCH); out.tipW = (+out.tip.WINDOW || 0) * 6e4; let lon = +out.tip.LON; if (lon > 180) lon -= 360; out.tipLat = +out.tip.LAT; out.tipLon = lon; }
+    out.incl = el.incl;
+    return out;
+  }
+
+  function status(r) {
+    const now = Date.now();
+    if (r.decayed) return ['b-done', 'ตกแล้ว (ยืนยันทางการ)'];
+    if (!r.fc || r.fc.error) return ['b-watch', 'ข้อมูลไม่พอ'];
+    const end = Math.max(r.fc.win[2], r.tipT ? r.tipT + r.tipW : 0);
+    if (end < now) return ['b-likely', 'น่าจะตกแล้ว · รอยืนยัน'];
+    if (r.fc.win[0] - now < 2 * 864e5) return ['b-crit', 'ใกล้ตก'];
+    return ['b-watch', 'เฝ้าระวัง'];
+  }
+
+  function cards() {
+    $('cards').innerHTML = st.sats.map(s => {
+      const r = st.res[s.norad] || {}, [cls, txt] = r.els ? status(r) : ['b-watch', '…'];
+      const eta = r.fc && !r.fc.error ? `${thDate(r.fc.eta)}` : '—';
+      return `<div class="card ${st.sel === s.norad ? 'sel' : ''}" data-n="${s.norad}">
+        <h3><span>${esc(s.name || s.satcat && s.satcat.OBJECT_NAME || s.norad)}</span><span class="badge ${cls}">${txt}</span></h3>
+        <div class="id">NORAD ${s.norad}${s.satcat && s.satcat.OBJECT_ID ? ' · ' + esc(s.satcat.OBJECT_ID) : ''}${s.satcat && s.satcat.RCS_SIZE ? ' · RCS ' + esc(s.satcat.RCS_SIZE) : ''}</div>
+        <div class="kv"><span>TLE ล่าสุด</span><b>${r.el ? thDate(r.el.epoch) : '—'}</b>
+        <span>ความสูง</span><b>${r.el ? `${r.peri.toFixed(0)} × ${r.apo.toFixed(0)} กม.` : '—'}</b>
+        <span>คาดตก (แบบจำลอง)</span><b class="o">${eta}</b>
+        <span>TIP ล่าสุด</span><b>${r.tip ? `${thDate(r.tipT)} ±${Math.round(r.tipW / 6e4)} นาที` : 'ไม่มี'}</b></div></div>`;
+    }).join('');
+    document.querySelectorAll('.card').forEach(c => c.onclick = () => { st.sel = +c.dataset.n; render(); });
+  }
+
+  // passes over Thailand: same phase model as the Monte Carlo, run with a slow-decay B (P95) so it covers the whole window
+  function overflights(r, t0, t1) {
+    const fc = r.fc, el = r.el, a0 = el.a, out = []; let cur = null;
+    const Bs = fc.B * Math.exp(-1.645 * (fc.sigB || 0.15)), T = fc.Tinf;
+    const run = E.integrate(a0, Bs, () => T, { keep: true, stopAlt: 120 });
+    const P = run.path, tt = P.map(p => p[0]), uu = [0];
+    const nr = alt => Math.pow(a0 / (alt + RE), 1.5);
+    for (let i = 1; i < P.length; i++) uu.push(uu[i - 1] + (tt[i] - tt[i - 1]) * 0.5 * (nr(P[i - 1][1]) + nr(P[i][1])));
+    const sr = S.twoline2satrec(el.l1, el.l2), pm = G.buildPhaseModel(S, sr, el.epoch, el.n);
+    let k = 0; const end = Math.min(t1, el.epoch + tt[tt.length - 1] * 864e5);
+    for (let t = t0; t <= end; t += 20e3) {
+      const d = (t - el.epoch) / 864e5; if (d < 0) continue;
+      while (k < tt.length - 2 && tt[k + 1] < d) k++;
+      const f = tt[k + 1] > tt[k] ? (d - tt[k]) / (tt[k + 1] - tt[k]) : 0, u = uu[k] + f * (uu[k + 1] - uu[k]);
+      const p = G.pointAt(S, pm, d, u), inside = inTH(p.lat, p.lon);
+      if (inside && !cur) cur = { a: t, b: t };
+      else if (inside) cur.b = t;
+      else if (cur) { out.push(cur); cur = null; }
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+
+  function render() {
+    cards();
+    const s = st.sats.find(x => x.norad === st.sel); if (!s) return;
+    let r = st.res[s.norad];
+    if (r && r.fc && !r.fc.error && r.runs < 1000) { r = st.res[s.norad] = Object.assign(analyse(s, 1000), { runs: 1000 }); cards(); }
+    const name = esc(s.name || s.norad), now = Date.now();
+    if (!r || !r.el) { $('detail').innerHTML = `<h2>${name}</h2><div class="note">ยังไม่มีข้อมูล TLE — รอรอบอัปเดตถัดไป</div>`; return; }
+    const fc = r.fc, [cls, txt] = status(r);
+    let h = `<h2>${name} <small>NORAD ${s.norad}${s.note ? ' · ' + esc(s.note) : ''}</small> <span class="badge ${cls}">${txt}</span></h2>`;
+    if (r.decayed) h += `<div class="warn" style="background:#0e3b2c;border-color:#1f6b4f;color:#bff3dc">USSPACECOM ยืนยันการกลับเข้าสู่ชั้นบรรยากาศ: ${thDate(r.decayed)}${r.decayRow && r.decayRow.MSG_EPOCH ? ' (ประกาศ ' + thDate(utc(r.decayRow.MSG_EPOCH)) + ')' : ''}</div>`;
+    h += '<div class="big">';
+    if (fc && !fc.error) {
+      h += `<div class="stat"><div class="l">คาดตก · แบบจำลองของเรา (${r.method === 'history' ? 'fit TLE 7 วัน' : 'ṅ จาก TLE'})</div><div class="v o">${thDate(fc.eta)}</div><div class="s">ช่วง 90%: ${thDate(fc.win[0])} – ${thDate(fc.win[2])}</div></div>`;
+      const left = fc.eta - now;
+      h += `<div class="stat"><div class="l">เหลือเวลาถึงค่ากลาง</div><div class="v">${left > 0 ? dur(left) : 'เลยแล้ว'}</div><div class="s">${left > 0 ? 'นับถึงเวลาคาดตกค่ากลาง' : 'เลยเวลาคาดตกค่ากลาง ' + dur(-left)}</div></div>`;
+    }
+    if (r.tip) h += `<div class="stat"><div class="l">TIP ล่าสุด · USSPACECOM</div><div class="v r">${thDate(r.tipT)}</div><div class="s">±${Math.round(r.tipW / 6e4)} นาที (${thDate(r.tipT - r.tipW)} – ${thDate(r.tipT + r.tipW)})<br>ออก ${thDate(utc(r.tip.MSG_EPOCH))} · รายงานถัดไปใน ${esc(r.tip.NEXT_REPORT)} ชม.</div></div>`;
+    else h += `<div class="stat"><div class="l">TIP · USSPACECOM</div><div class="v">ไม่มี</div><div class="s">TIP ออกเฉพาะวัตถุขนาดใหญ่ (>1 ตร.ม.)</div></div>`;
+    h += `<div class="stat"><div class="l">วงโคจร TLE ล่าสุด (${thDate(r.el.epoch)})</div><div class="v">${r.peri.toFixed(0)} × ${r.apo.toFixed(0)} กม.</div><div class="s">มุมเอียง ${r.incl.toFixed(2)}° → ตกได้ระหว่างละติจูด ${r.latMax.toFixed(1)}°N – ${r.latMax.toFixed(1)}°S${r.latMax > 70 ? ' (ทั่วโลก)' : ''}</div></div>`;
+    h += '</div>';
+    if (fc && fc.error) h += `<div class="warn">${esc(fc.error)}</div>`;
+    if (r.tip && fc && !fc.error) { const diff = (fc.eta - r.tipT) / 36e5; h += `<div class="note">แบบจำลองของเรา${Math.abs(diff) < 1 ? 'ใกล้เคียงกับ TIP' : (diff > 0 ? `ช้ากว่า TIP ${diff.toFixed(1)} ชม.` : `เร็วกว่า TIP ${(-diff).toFixed(1)} ชม.`)} · สำหรับรายงานทางการให้ยึด TIP / Decay ของ USSPACECOM เป็นหลัก</div>`; }
+    $('detail').innerHTML = h;
+
+    // Thailand panel
+    let t = `<h2>ประเทศไทย <small>(เส้นขอบแบบหยาบ)</small></h2>`;
+    const inBand = r.latMax >= 5.6;
+    if (!inBand) t += `<div class="note" style="margin-top:0">วงโคจรเอียง ${r.incl.toFixed(1)}° ไม่ถึงละติจูดของประเทศไทย จึงไม่มีโอกาสตกในไทย</div>`;
+    else if (fc && !fc.error && r.pts) {
+      const pct = r.thN / r.pts.length * 100;
+      t += `<div class="big"><div class="stat"><div class="l">กรณีที่ตกในประเทศไทย (Monte Carlo)</div><div class="v ${r.thN ? 'a' : 'g'}">${r.thN} / ${r.pts.length}</div><div class="s">≈ ${pct.toFixed(1)}% ${r.incl < 25 && fc.win[2] - fc.win[0] > 6 * 36e5 ? '· ช่วงเวลายังกว้างหลายรอบโคจร ค่านี้จะชัดขึ้นเมื่อใกล้ตก' : ''}</div></div></div>`;
+      const t0 = Math.max(now, Math.min(fc.win[0], r.tipT ? r.tipT - r.tipW : Infinity)), t1 = Math.max(fc.win[2], r.tipT ? r.tipT + r.tipW : 0);
+      if (t1 > now && !r.decayed) {
+        const ov = overflights(r, t0, Math.min(t1, now + 4 * 864e5));
+        t += `<h2 style="margin-top:12px">ช่วงที่ผ่านเหนือประเทศไทย <small>ระหว่าง ${thDate(t0)} – ${thDate(t1)}</small></h2>`;
+        t += ov.length ? `<table><tr><th>เวลาผ่านเหนือไทย</th><th>อยู่ในช่วงคาดตก</th></tr>` + ov.map(o => { const inW = o.a >= fc.win[0] && o.a <= fc.win[2], inTip = r.tipT && o.a >= r.tipT - r.tipW && o.a <= r.tipT + r.tipW; return `<tr class="${inW || inTip ? 'hl' : ''}"><td>${thDate(o.a).replace(' น.', '')}–${hhmm(o.b + 20e3)} น.</td><td>${[inW ? 'แบบจำลอง 90%' : '', inTip ? 'TIP' : ''].filter(Boolean).join(' · ') || '—'}</td></tr>`; }).join('') + `</table>` : `<div class="note">ไม่มีช่วงที่ผ่านเหนือประเทศไทยในช่วงเวลานี้</div>`;
+        t += `<div class="note">คำนวณจากแบบจำลองเดียวกับ Monte Carlo (กรณีลดระดับช้า เพื่อให้ครอบคลุมทั้งช่วง) · ยิ่งห่างจากเวลาปัจจุบัน เวลาผ่านยิ่งคลาดได้มาก (หลายสิบนาทีเมื่อเกิน 1 วัน) · แถวสีส้ม = อยู่ในช่วงคาดตก ถ้าดาวเทียมตกตอนนั้น จุดตกจะอยู่แถวประเทศไทย</div>`;
+      } else t += `<div class="note">เลยช่วงเวลาคาดตกแล้ว</div>`;
+    }
+    $('thai').innerHTML = t;
+
+    // TIP table
+    $('tip').innerHTML = `<h2>ประกาศ TIP <small>(Tracking and Impact Prediction · USSPACECOM)</small></h2>` + (r.tips && r.tips.length ? `<table><tr><th>ออกเมื่อ</th><th>คาดตก</th><th>±</th><th>ตำแหน่ง</th></tr>` + r.tips.slice(0, 8).map((x, i) => { let lon = +x.LON; if (lon > 180) lon -= 360; return `<tr class="${i ? '' : 'hl'}"><td>${thDate(utc(x.MSG_EPOCH))}</td><td>${thDate(utc(x.DECAY_EPOCH))}</td><td>${Math.round(+x.WINDOW || 0)} นาที</td><td>${(+x.LAT).toFixed(1)}°, ${lon.toFixed(1)}° (${esc(x.DIRECTION || '')})</td></tr>`; }).join('') + `</table><div class="note">ตำแหน่งใน TIP คือจุดบนแนวโคจรที่เวลาคาดตกค่ากลาง ไม่ใช่จุดตกแน่นอน</div>` : `<div class="note" style="margin-top:0">ยังไม่มี TIP สำหรับวัตถุนี้</div>`);
+
+    drawMap(r, s); drawAlt(r);
+  }
+
+  function drawMap(r, s) {
+    const W = 1000, H = 500, X = l => (l + 180) / 360 * W, Y = l => (90 - l) / 180 * H;
+    let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="แผนที่จุดตกที่เป็นไปได้"><rect width="${W}" height="${H}" fill="#071a2b"/><g transform="scale(1,${H / 460})">${window.LAND_SVG || ''}</g>`;
+    for (let lo = -150; lo <= 150; lo += 30) g += `<line x1="${X(lo)}" x2="${X(lo)}" y1="0" y2="${H}" stroke="#12324e" stroke-width=".6"/>`;
+    for (let la = -60; la <= 60; la += 30) g += `<line y1="${Y(la)}" y2="${Y(la)}" x1="0" x2="${W}" stroke="#12324e" stroke-width=".6"/>`;
+    if (r.latMax && r.latMax < 85) [r.latMax, -r.latMax].forEach(la => { const ll = Math.max(-89, Math.min(89, la)); g += `<line y1="${Y(ll)}" y2="${Y(ll)}" x1="0" x2="${W}" stroke="#8fa9c0" stroke-width="1" stroke-dasharray="5 4" opacity=".7"/>`; });
+    g += `<polygon points="${TH_POLY.map(([lo, la]) => `${X(lo).toFixed(1)},${Y(la).toFixed(1)}`).join(' ')}" fill="rgba(255,138,42,.15)" stroke="#ff8a2a" stroke-width="1.4"/>`;
+    if (r.pts && r.pts.length) {
+      const t0 = r.pts.reduce((m, p) => Math.min(m, p.t), Infinity), t1 = r.pts.reduce((m, p) => Math.max(m, p.t), 0);
+      const col = t => { const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0; return `rgb(${Math.round(158 - 150 * f)},${Math.round(202 - 121 * f)},${Math.round(225 - 69 * f)})`; };
+      g += r.pts.map(p => `<circle cx="${X(p.lon).toFixed(1)}" cy="${Y(p.lat).toFixed(1)}" r="1.8" fill="${col(p.t)}" opacity=".85"/>`).join('');
+    }
+    if (r.tip) g += `<g><circle cx="${X(r.tipLon)}" cy="${Y(r.tipLat)}" r="7" fill="#ff5a4a" stroke="#fff" stroke-width="2"/><text x="${X(r.tipLon) + 10}" y="${Y(r.tipLat) - 8}" fill="#ffd0c8" font-size="13" font-weight="700" paint-order="stroke" stroke="#071a2b" stroke-width="3">TIP ${hhmm(r.tipT)} น.</text></g>`;
+    g += `</svg>`;
+    $('map').innerHTML = g;
+    $('mapTitle').textContent = `แผนที่จุดตกที่เป็นไปได้ · ${s.name || s.norad}`;
+    const fc = r.fc;
+    $('mapNote').textContent = fc && !fc.error ? `จุด ${r.pts ? r.pts.length : 0} จุด = ตำแหน่งตกของแต่ละกรณีจากการจำลอง Monte Carlo · ช่วง 90% กว้าง ${((fc.win[2] - fc.win[0]) / 36e5).toFixed(1)} ชม. ≈ ${((fc.win[2] - fc.win[0]) / 6e4 / (1440 / r.el.n)).toFixed(1)} รอบโคจร${(fc.win[2] - fc.win[0]) / 6e4 > 1440 / r.el.n ? ' จุดจึงกระจายทั่วแถบละติจูด' : ''}` : '';
+  }
+
+  function drawAlt(r) {
+    const els = r.els.filter(e => e.epoch > r.el.epoch - 14 * 864e5);
+    if (els.length < 2) { $('alt').innerHTML = ''; $('tleTable').innerHTML = ''; return; }
+    const W = 560, H = 210, L = 44, B = 26, T = 10, R = 10;
+    const t0 = els[0].epoch, t1 = Math.max(r.el.epoch, r.fc && !r.fc.error ? r.fc.eta : r.el.epoch);
+    const mean = e => e.a - RE, vals = els.map(mean), lo = Math.min(110, ...vals), hi = Math.max(...vals) + 10;
+    const x = t => L + (t - t0) / (t1 - t0) * (W - L - R), y = v => T + (hi - v) / (hi - lo) * (H - T - B);
+    let g = `<svg viewBox="0 0 ${W} ${H}">`;
+    for (let v = Math.ceil(lo / 20) * 20; v <= hi; v += 20) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#12324e"/><text x="${L - 6}" y="${y(v) + 4}" fill="#8fa9c0" font-size="10" text-anchor="end">${v}</text>`;
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(120)}" y2="${y(120)}" stroke="#ff5a4a" stroke-dasharray="5 4"/><text x="${L + 4}" y="${y(120) - 4}" fill="#ff8a7a" font-size="10">120 กม.</text>`;
+    g += `<polyline points="${els.map(e => `${x(e.epoch).toFixed(1)},${y(mean(e)).toFixed(1)}`).join(' ')}" fill="none" stroke="#4ea3ff" stroke-width="2"/>`;
+    g += els.map(e => `<circle cx="${x(e.epoch).toFixed(1)}" cy="${y(mean(e)).toFixed(1)}" r="2.5" fill="#4ea3ff"><title>${thDate(e.epoch)}: ${mean(e).toFixed(0)} กม.</title></circle>`).join('');
+    if (r.fc && !r.fc.error && r.fc.path) g += `<polyline points="${r.fc.path.filter((p, i) => i % 4 === 0).map(p => `${x(r.el.epoch + p[0] * 864e5).toFixed(1)},${y(p[1]).toFixed(1)}`).join(' ')}" fill="none" stroke="#ff8a2a" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+    const days = []; for (let d = Math.ceil((t0 + 7 * 36e5) / 864e5) * 864e5 - 7 * 36e5; d < t1; d += 864e5) days.push(d);
+    g += days.map(d => `<text x="${x(d)}" y="${H - 8}" fill="#8fa9c0" font-size="10" text-anchor="middle">${thDate(d).split(' ').slice(0, 2).join(' ')}</text>`).join('');
+    g += `</svg>`;
+    $('alt').innerHTML = g + `<div class="legend"><span><i style="background:#4ea3ff"></i>ความสูงเฉลี่ยจาก TLE</span><span><i style="background:#ff8a2a"></i>แบบจำลอง (ค่ากลาง)</span></div>`;
+    $('tleTable').innerHTML = `<table style="margin-top:8px"><tr><th>TLE epoch</th><th>จุดต่ำ × สูง</th><th>แหล่ง</th></tr>` + r.els.slice(-6).reverse().map((e, i) => { const src = ((st.sats.find(s => s.norad === st.sel) || {}).tle || []).find(t => t.l1 === e.l1); return `<tr class="${i ? '' : 'hl'}"><td>${thDate(e.epoch)}</td><td>${e.perigee.toFixed(0)} × ${e.apogee.toFixed(0)} กม.</td><td>${esc(src ? src.src : '')}</td></tr>`; }).join('') + `</table>`;
+  }
+
+  async function load() {
+    const [tg, wx, stj] = await Promise.all([get('data/targets.json'), get('data/wx.json'), get('data/status.json')]);
+    if (!tg || !wx) { $('upd').textContent = 'โหลดข้อมูลไม่สำเร็จ'; return; }
+    st.wx = wx;
+    const list = (tg.targets || []).map(t => +t.norad).filter(Boolean);
+    st.sats = (await Promise.all(list.map(n => get(`data/sat_${n}.json`)))).map((s, i) => Object.assign({ norad: list[i], tle: [], tip: [], decay: [] }, s || {}, { norad: list[i], name: (tg.targets[i] || {}).name || (s && s.name), note: (tg.targets[i] || {}).note || '' }));
+    st.res = {};
+    for (const s of st.sats) { try { st.res[s.norad] = Object.assign(analyse(s, 400), { runs: 400 }); } catch (e) { st.res[s.norad] = { err: String(e) }; } }
+    if (!st.sel || !st.sats.some(s => s.norad === st.sel)) {
+      const live = st.sats.filter(s => { const r = st.res[s.norad]; return r && r.els && !r.decayed && status(r)[0] !== 'b-likely'; });
+      st.sel = (live[0] || st.sats[0] || {}).norad;
+    }
+    $('upd').textContent = `อัปเดตข้อมูล: ${stj && stj.lastRun ? thDate(Date.parse(stj.lastRun)) : '—'} · F10.7 ${wx.f107} · Kp ${wx.kp}`;
+    render();
+  }
+  load();
+  setInterval(load, 10 * 60 * 1000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+name: Re-entry Watch (multi-target) update
+
+on:
+  schedule:
+    - cron: "11,41 * * * *"   # ทุก 30 นาที (UTC) — ระหว่างเฝ้าระวัง Swift
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch multi-target data
+        run: python scripts/multi_update.py
+        env:
+          ST_USER: ${{ secrets.ST_USER }}
+          ST_PASS: ${{ secrets.ST_PASS }}
+      - name: Commit data changes
+        run: |
+          git config user.name "reentry-watch-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add multi/data
+          git diff --cached --quiet || (git commit -m "multi: data update $(date -u +%Y-%m-%dT%H:%MZ)" && git pull --rebase -q && git push)
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deploy
+        uses: actions/deploy-pages@v4

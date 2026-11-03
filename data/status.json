@@ -1,5 +1,5 @@
 {
- "lastRun": "2026-11-03T06:21:58Z",
- "note": "new TLE: 26306.03458208; Reddit error: HTTP Error 403: Blocked; SatNOGS obs fetched 75",
- "decay_date": null
+ "lastRun": "2026-11-03T14:35:09Z",
+ "note": "no new TLE; CelesTrak error: HTTP Error 404: Not Found; Reddit error: HTTP Error 403: Blocked; SatNOGS obs fetched 75",
+ "decay_date": "2026-11-02"
 }

@@ -65,7 +65,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     <div>
       <div class="panel" id="detail"></div>
       <div class="panel"><h2 id="mapTitle">แผนที่จุดตกที่เป็นไปได้</h2><div id="map"></div>
-        <div class="legend" id="mapLegend"><span><i style="background:#9ecae1"></i>ตกเร็ว</span><span><i style="background:#08519c;border:1px solid #9ecae1"></i>ตกช้า</span><span><i style="background:#ff5a4a"></i>จุดคาดตกตาม TIP (USSPACECOM)</span><span><i style="background:transparent;border:2px solid #ff8a2a"></i>ประเทศไทย (เส้นขอบแบบหยาบ)</span><span>เส้นประ = ขอบละติจูดที่วงโคจรผ่านได้</span></div>
+        <div class="legend" id="mapLegend"><span><i style="background:#9ecae1"></i>ตกเร็ว</span><span><i style="background:#08519c;border:1px solid #9ecae1"></i>ตกช้า</span><span><i style="background:#ff5a4a"></i>จุดคาดตกตาม TIP (USSPACECOM)</span><span><i style="background:transparent;border:2px solid #ff8a2a"></i>ประเทศไทย (เส้นขอบแบบหยาบ)</span><span>เส้นประ = ขอบละติจูดที่วงโคจรผ่านได้</span><span><i style="background:#ffd84a"></i>ตำแหน่งตอนนี้ + แนวโคจร 100 นาทีข้างหน้า</span></div>
         <div class="note" id="mapNote"></div></div>
       <div class="panel" id="extra" style="display:none"></div>
     </div>
@@ -182,6 +182,16 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
 
   // passes over Thailand: same phase model as the Monte Carlo, run with a slow-decay B (P95) so it covers the whole window
   function overflights(r, t0, t1) {
+    const lv = livePos(r);
+    if (lv && lv.shift && t1 - Date.now() < 1.5 * 864e5) {   // near-term: SGP4 aligned to the latest TIP
+      const sr = S.twoline2satrec(r.el.l1, r.el.l2), out = []; let cur = null;
+      for (let t = t0; t <= t1; t += 10e3) {
+        const d = new Date(t + lv.shift), pv = S.propagate(sr, d); if (!pv || !pv.position) break;
+        const g = S.eciToGeodetic(pv.position, S.gstime(d)), inside = inTH(S.degreesLat(g.latitude), S.degreesLong(g.longitude));
+        if (inside && !cur) cur = { a: t, b: t }; else if (inside) cur.b = t; else if (cur) { out.push(cur); cur = null; }
+      }
+      if (cur) out.push(cur); out.method = 'tip'; return out;
+    }
     const fc = r.fc, el = r.el, a0 = el.a, out = []; let cur = null;
     const Bs = fc.B * Math.exp(-1.645 * (fc.sigB || 0.15)), T = fc.Tinf;
     const run = E.integrate(a0, Bs, () => T, { keep: true, stopAlt: 120 });
@@ -225,6 +235,8 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     if (r.tip) h += `<div class="stat"><div class="l">TIP ล่าสุด · USSPACECOM</div><div class="v r">${thDate(r.tipT)}</div><div class="s">±${Math.round(r.tipW / 6e4)} นาที (${thDate(r.tipT - r.tipW)} – ${thDate(r.tipT + r.tipW)})<br>ออก ${thDate(utc(r.tip.MSG_EPOCH))} · รายงานถัดไปใน ${esc(r.tip.NEXT_REPORT)} ชม.</div></div>`;
     else h += `<div class="stat"><div class="l">TIP · USSPACECOM</div><div class="v">ไม่มี</div><div class="s">TIP ออกเฉพาะวัตถุขนาดใหญ่ (>1 ตร.ม.)</div></div>`;
     h += `<div class="stat"><div class="l">วงโคจร TLE ล่าสุด (${thDate(r.el.epoch)})</div><div class="v">${r.peri.toFixed(0)} × ${r.apo.toFixed(0)} กม.</div><div class="s">มุมเอียง ${r.incl.toFixed(2)}° → ตกได้ระหว่างละติจูด ${r.latMax.toFixed(1)}°N – ${r.latMax.toFixed(1)}°S${r.latMax > 70 ? ' (ทั่วโลก)' : ''}</div></div>`;
+    const lv = !r.decayed && fc && !fc.error && Math.max(fc.win[2], r.tipT ? r.tipT + r.tipW : 0) > now ? livePos(r) : null;
+    if (lv) h += `<div class="stat" style="border:1px solid #6b5a10"><div class="l">ตำแหน่งตอนนี้ (${hhmm(now)} น.)</div><div class="v" style="color:#ffd84a">${Math.abs(lv.cur.lat).toFixed(1)}°${lv.cur.lat >= 0 ? 'N' : 'S'} ${Math.abs(lv.cur.lon).toFixed(1)}°${lv.cur.lon >= 0 ? 'E' : 'W'}</div><div class="s">สูง ~${lv.cur.h.toFixed(0)} กม. · ${lv.shift ? `ปรับเวลาให้ตรงกับ TIP (${(lv.shift / 6e4).toFixed(1)} นาที, คลาด ${lv.miss.toFixed(0)} กม.)` : 'SGP4 จาก TLE ล่าสุด'} · ดูแนวสีเหลืองบนแผนที่</div></div>`;
     h += '</div>';
     if (fc && fc.error) h += `<div class="warn">${esc(fc.error)}</div>`;
     if (r.tip && fc && !fc.error) { const diff = (fc.eta - r.tipT) / 36e5; h += `<div class="note">แบบจำลองของเรา${Math.abs(diff) < 1 ? 'ใกล้เคียงกับ TIP' : (diff > 0 ? `ช้ากว่า TIP ${diff.toFixed(1)} ชม.` : `เร็วกว่า TIP ${(-diff).toFixed(1)} ชม.`)} · สำหรับรายงานทางการให้ยึด TIP / Decay ของ USSPACECOM เป็นหลัก</div>`; }
@@ -239,10 +251,10 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
       t += `<div class="big"><div class="stat"><div class="l">กรณีที่ตกในประเทศไทย (Monte Carlo)</div><div class="v ${r.thN ? 'a' : 'g'}">${r.thN} / ${r.pts.length}</div><div class="s">≈ ${pct.toFixed(1)}% ${r.incl < 25 && fc.win[2] - fc.win[0] > 6 * 36e5 ? '· ช่วงเวลายังกว้างหลายรอบโคจร ค่านี้จะชัดขึ้นเมื่อใกล้ตก' : ''}</div></div></div>`;
       const t0 = Math.max(now, Math.min(fc.win[0], r.tipT ? r.tipT - r.tipW : Infinity)), t1 = Math.max(fc.win[2], r.tipT ? r.tipT + r.tipW : 0);
       if (t1 > now && !r.decayed) {
-        const ov = overflights(r, t0, Math.min(t1, now + 4 * 864e5));
+        const ov = overflights(r, Math.min(t0, now), Math.min(t1, now + 4 * 864e5));
         t += `<h2 style="margin-top:12px">ช่วงที่ผ่านเหนือประเทศไทย <small>ระหว่าง ${thDate(t0)} – ${thDate(t1)}</small></h2>`;
         t += ov.length ? `<table><tr><th>เวลาผ่านเหนือไทย</th><th>อยู่ในช่วงคาดตก</th></tr>` + ov.map(o => { const inW = o.a >= fc.win[0] && o.a <= fc.win[2], inTip = r.tipT && o.a >= r.tipT - r.tipW && o.a <= r.tipT + r.tipW; return `<tr class="${inW || inTip ? 'hl' : ''}"><td>${thDate(o.a).replace(' น.', '')}–${hhmm(o.b + 20e3)} น.</td><td>${[inW ? 'แบบจำลอง 90%' : '', inTip ? 'TIP' : ''].filter(Boolean).join(' · ') || '—'}</td></tr>`; }).join('') + `</table>` : `<div class="note">ไม่มีช่วงที่ผ่านเหนือประเทศไทยในช่วงเวลานี้</div>`;
-        t += `<div class="note">คำนวณจากแบบจำลองเดียวกับ Monte Carlo (กรณีลดระดับช้า เพื่อให้ครอบคลุมทั้งช่วง) · ยิ่งห่างจากเวลาปัจจุบัน เวลาผ่านยิ่งคลาดได้มาก (หลายสิบนาทีเมื่อเกิน 1 วัน) · แถวสีส้ม = อยู่ในช่วงคาดตก ถ้าดาวเทียมตกตอนนั้น จุดตกจะอยู่แถวประเทศไทย</div>`;
+        t += ov.method === 'tip' ? `<div class="note">คำนวณด้วย SGP4 จาก TLE ล่าสุด ปรับเวลาให้แนวโคจรผ่านจุดของ TIP ณ เวลา TIP · แถวสีส้ม = อยู่ในช่วงคาดตก ถ้าดาวเทียมตกตอนนั้น จุดตกจะอยู่แถวประเทศไทย</div>` : `<div class="note">คำนวณจากแบบจำลองเดียวกับ Monte Carlo (กรณีลดระดับช้า เพื่อให้ครอบคลุมทั้งช่วง) · ยิ่งห่างจากเวลาปัจจุบัน เวลาผ่านยิ่งคลาดได้มาก (หลายสิบนาทีเมื่อเกิน 1 วัน) · แถวสีส้ม = อยู่ในช่วงคาดตก ถ้าดาวเทียมตกตอนนั้น จุดตกจะอยู่แถวประเทศไทย</div>`;
       } else t += `<div class="note">เลยช่วงเวลาคาดตกแล้ว</div>`;
     }
     $('thai').innerHTML = t;
@@ -352,6 +364,24 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     $('tleTable').innerHTML = `<h2 style="margin-top:12px">TLE ล่าสุด 8 ชุด</h2><table><tr><th>TLE epoch</th><th>ตำแหน่ง</th><th>ความสูง − GEO</th><th>มุมเอียง</th></tr>` + rows.slice(-8).reverse().map((e, i) => `<tr class="${i ? '' : 'hl'}"><td>${thDate(e.t)}</td><td>${e.lon.toFixed(3)}°E</td><td>${e.da >= 0 ? '+' : ''}${e.da.toFixed(1)} กม.</td><td>${e.inc.toFixed(3)}°</td></tr>`).join('') + `</table>`;
   }
 
+  // live position: SGP4 from the latest TLE, time-shifted so its track passes the latest TIP point at the TIP time
+  function livePos(r) {
+    if (!r.el) return null;
+    const sr = S.twoline2satrec(r.el.l1, r.el.l2);
+    const P = ms => { const d = new Date(ms), pv = S.propagate(sr, d); if (!pv || !pv.position) return null; const g = S.eciToGeodetic(pv.position, S.gstime(d)); return { lat: S.degreesLat(g.latitude), lon: S.degreesLong(g.longitude), h: g.height }; };
+    if (r.shift == null) {
+      r.shift = 0; r.shiftMiss = null;
+      if (r.tip && Math.abs(r.tipT - Date.now()) < 2 * 864e5) {
+        const hav = (a, b) => { const k = Math.PI / 180, d = Math.sin((b.lat - a.lat) * k / 2) ** 2 + Math.cos(a.lat * k) * Math.cos(b.lat * k) * Math.sin((b.lon - a.lon) * k / 2) ** 2; return 2 * 6371 * Math.asin(Math.sqrt(d)); };
+        let best = null; for (let dt = -45 * 6e4; dt <= 45 * 6e4; dt += 5e3) { const q = P(r.tipT + dt); if (!q) continue; const d = hav(q, { lat: r.tipLat, lon: r.tipLon }); if (!best || d < best.d) best = { dt, d }; }
+        if (best && best.d < 300) { r.shift = best.dt; r.shiftMiss = best.d; }
+      }
+    }
+    const now = Date.now(), cur = P(now + r.shift); if (!cur) return null;
+    const track = []; for (let m = 0; m <= 100; m += 1) { const q = P(now + m * 6e4 + r.shift); if (q) track.push(Object.assign(q, { t: now + m * 6e4 })); }
+    return { cur, track, shift: r.shift, miss: r.shiftMiss };
+  }
+
   function drawMap(r, s) {
     const W = 1000, H = 500, X = l => (l + 180) / 360 * W, Y = l => (90 - l) / 180 * H;
     let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="แผนที่จุดตกที่เป็นไปได้"><rect width="${W}" height="${H}" fill="#071a2b"/><g transform="scale(1,${H / 460})">${window.LAND_SVG || ''}</g>`;
@@ -364,6 +394,14 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
       const col = t => { const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0; return `rgb(${Math.round(158 - 150 * f)},${Math.round(202 - 121 * f)},${Math.round(225 - 69 * f)})`; };
       g += r.pts.map(p => `<circle cx="${X(p.lon).toFixed(1)}" cy="${Y(p.lat).toFixed(1)}" r="1.8" fill="${col(p.t)}" opacity=".85"/>`).join('');
     }
+    const live = !r.decayed && r.fc && !r.fc.error && Math.max(r.fc.win[2], r.tipT ? r.tipT + r.tipW : 0) > Date.now() ? livePos(r) : null;
+    if (live) {
+      let seg = [], segs = []; live.track.forEach((q, i) => { if (i && Math.abs(q.lon - live.track[i - 1].lon) > 180) { segs.push(seg); seg = []; } seg.push(`${X(q.lon).toFixed(1)},${Y(q.lat).toFixed(1)}`); }); segs.push(seg);
+      g += segs.map(sg => `<polyline points="${sg.join(' ')}" fill="none" stroke="#ffd84a" stroke-width="1.6" stroke-dasharray="6 4"/>`).join('');
+      live.track.forEach((q, i) => { if (i && i % 10 === 0) g += `<circle cx="${X(q.lon).toFixed(1)}" cy="${Y(q.lat).toFixed(1)}" r="2.5" fill="#ffd84a"/><text x="${X(q.lon) + 5}" y="${Y(q.lat) - 5}" fill="#ffe9a0" font-size="10" paint-order="stroke" stroke="#071a2b" stroke-width="3">${hhmm(q.t)}</text>`; });
+      g += `<g><circle cx="${X(live.cur.lon)}" cy="${Y(live.cur.lat)}" r="9" fill="none" stroke="#ffd84a" stroke-width="2"><animate attributeName="r" values="7;13;7" dur="1.6s" repeatCount="indefinite"/></circle><circle cx="${X(live.cur.lon)}" cy="${Y(live.cur.lat)}" r="5" fill="#ffd84a" stroke="#071a2b" stroke-width="1.5"/><text x="${X(live.cur.lon) + 12}" y="${Y(live.cur.lat) + 4}" fill="#fff3c4" font-size="13" font-weight="700" paint-order="stroke" stroke="#071a2b" stroke-width="3">ตอนนี้ ${hhmm(Date.now())} น.</text></g>`;
+    }
+    st.live = live;
     if (r.tip) g += `<g><circle cx="${X(r.tipLon)}" cy="${Y(r.tipLat)}" r="7" fill="#ff5a4a" stroke="#fff" stroke-width="2"/><text x="${X(r.tipLon) + 10}" y="${Y(r.tipLat) - 8}" fill="#ffd0c8" font-size="13" font-weight="700" paint-order="stroke" stroke="#071a2b" stroke-width="3">TIP ${hhmm(r.tipT)} น.</text></g>`;
     g += `</svg>`;
     $('map').innerHTML = g;
@@ -410,6 +448,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
   }
   load();
   setInterval(load, 10 * 60 * 1000);
+  setInterval(() => { const s = st.sats.find(x => x.norad === st.sel), r = s && st.res[s.norad]; if (r && !r.geo && r.fc) { drawMap(r, s); } }, 30 * 1000);
 })();
 </script>
 </body>

@@ -1,0 +1,27 @@
+{
+ "_note": "ผลพยากรณ์จากหน่วยงานอื่น สำหรับเทียบกับของจริง — เวลาเป็น UTC (ISO) · lat/lon ใส่ได้ถ้ามี · approx=true ถ้าตำแหน่งเป็นค่าประมาณจากชื่อประเทศ",
+ "predictions": [
+  {
+   "org": "GISTDA (S-TREC · GARNET/ZIRCON)",
+   "published": "2026-11-04T10:23:00Z",
+   "time": "2026-11-04T10:47:00Z",
+   "window_min": 150,
+   "place": "ไนเจอร์ แอฟริกา",
+   "lat": 17.6,
+   "lon": 8.1,
+   "approx": true,
+   "src": "https://www.matichon.co.th/local/news_5961541",
+   "srcName": "มติชน / Nation",
+   "note": "ตรงกับ TIP ฉบับ 3 พ.ย. 18:32 น. (17:47 น. · 16.0°N 7.2°E)"
+  },
+  {
+   "org": "Aerospace Corp. (ผ่านสื่อ)",
+   "published": null,
+   "time": "2026-11-04T10:19:00Z",
+   "window_min": 120,
+   "place": "",
+   "src": "https://www.spacemanthailand.com/swift-observatory-to-re-enter-atmosphere/",
+   "srcName": "SPACEMAN"
+  }
+ ]
+}

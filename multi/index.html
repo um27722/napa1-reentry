@@ -65,7 +65,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     <div>
       <div class="panel" id="detail"></div>
       <div class="panel"><h2 id="mapTitle">แผนที่จุดตกที่เป็นไปได้</h2><div id="map"></div>
-        <div class="legend" id="mapLegend"><span><i style="background:#9ecae1"></i>ตกเร็ว</span><span><i style="background:#08519c;border:1px solid #9ecae1"></i>ตกช้า</span><span><i style="background:#ff5a4a"></i>จุดคาดตกตาม TIP (USSPACECOM)</span><span><i style="background:transparent;border:2px solid #ff8a2a"></i>ประเทศไทย (เส้นขอบแบบหยาบ)</span><span>เส้นประ = ขอบละติจูดที่วงโคจรผ่านได้</span><span><i style="background:#ffd84a"></i>ตำแหน่งตอนนี้ + แนวโคจร 100 นาทีข้างหน้า</span></div>
+        <div class="legend" id="mapLegend"><span><i style="background:#9ecae1"></i>ตกเร็ว</span><span><i style="background:#08519c;border:1px solid #9ecae1"></i>ตกช้า</span><span><i style="background:#ff5a4a"></i>จุดคาดตกตาม TIP (USSPACECOM)</span><span><i style="background:transparent;border:2px solid #ff8a2a"></i>ประเทศไทย (เส้นขอบแบบหยาบ)</span><span>เส้นประ = ขอบละติจูดที่วงโคจรผ่านได้</span><span><i style="background:#ffd84a"></i>ตำแหน่งตอนนี้ + แนวโคจร 100 นาทีข้างหน้า</span><span><i style="background:#ff8a2a;border-radius:2px"></i>จุดตกค่ากลางของแบบจำลองเรา</span><span><i style="background:#b07cff;border-radius:2px"></i>หน่วยงานอื่น (GISTDA ฯลฯ)</span></div>
         <div class="note" id="mapNote"></div></div>
       <div class="panel" id="extra" style="display:none"></div>
     </div>
@@ -123,6 +123,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
       const sr = S.twoline2satrec(el.l1, el.l2), pm = G.buildPhaseModel(S, sr, el.epoch, el.n);
       out.pts = fc.samples.map(q => { const p = G.pointAt(S, pm, q.days, q.uInt); return { t: el.epoch + q.days * 864e5, lat: p.lat, lon: p.lon }; });
       out.thN = out.pts.filter(p => inTH(p.lat, p.lon)).length;
+      const nm = G.pointAt(S, pm, fc.nominalDays, fc.nominalUInt); out.nom = { t: fc.eta, lat: nm.lat, lon: nm.lon };
     } catch (e) { out.pts = []; }
     // official messages
     const dec = (s.decay || []).filter(d => /hist/i.test(d.MSG_TYPE || ''));
@@ -221,7 +222,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     const name = esc(s.name || s.norad), now = Date.now();
     if (!r || !r.el) { $('detail').innerHTML = `<h2>${name}</h2><div class="note">ยังไม่มีข้อมูล TLE — รอรอบอัปเดตถัดไป</div>`; return; }
     const lg = document.getElementById('mapLegend'); if (lg) lg.style.display = r && r.geo ? 'none' : '';
-    $('extra').style.display = r && r.geo ? '' : 'none'; $('altTitle').innerHTML = r && r.geo ? 'องค์ประกอบวงโคจร <small>(TLE ล่าสุดจาก Space-Track)</small>' : 'ความสูงวงโคจร <small>(จาก TLE)</small>';
+    $('extra').style.display = r && (r.geo || (r.fc && !r.fc.error)) ? '' : 'none'; $('altTitle').innerHTML = r && r.geo ? 'องค์ประกอบวงโคจร <small>(TLE ล่าสุดจาก Space-Track)</small>' : 'ความสูงวงโคจร <small>(จาก TLE)</small>';
     if (r.geo) { renderGeo(s, r); return; }
     const fc = r.fc, [cls, txt] = status(r);
     let h = `<h2>${name} <small>NORAD ${s.norad}${s.note ? ' · ' + esc(s.note) : ''}</small> <span class="badge ${cls}">${txt}</span></h2>`;
@@ -262,6 +263,22 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     // TIP table
     $('tip').innerHTML = `<h2>ประกาศ TIP <small>(Tracking and Impact Prediction · USSPACECOM)</small></h2>` + (r.tips && r.tips.length ? `<table><tr><th>ออกเมื่อ</th><th>คาดตก</th><th>±</th><th>ตำแหน่ง</th></tr>` + r.tips.slice(0, 8).map((x, i) => { let lon = +x.LON; if (lon > 180) lon -= 360; return `<tr class="${i ? '' : 'hl'}"><td>${thDate(utc(x.MSG_EPOCH))}</td><td>${thDate(utc(x.DECAY_EPOCH))}</td><td>${Math.round(+x.WINDOW || 0)} นาที</td><td>${(+x.LAT).toFixed(1)}°, ${lon.toFixed(1)}° (${esc(x.DIRECTION || '')})</td></tr>`; }).join('') + `</table><div class="note">ตำแหน่งใน TIP คือจุดบนแนวโคจรที่เวลาคาดตกค่ากลาง ไม่ใช่จุดตกแน่นอน</div>` : `<div class="note" style="margin-top:0">ยังไม่มี TIP สำหรับวัตถุนี้</div>`);
 
+    // ---- forecast comparison (ours vs USSPACECOM vs others) — error vs actual once Decay is confirmed
+    {
+      const ll = (la, lo) => la == null ? '' : `${Math.abs(la).toFixed(1)}°${la >= 0 ? 'N' : 'S'} ${Math.abs(lo).toFixed(1)}°${lo >= 0 ? 'E' : 'W'}`;
+      const rows = [];
+      if (fc && !fc.error) rows.push({ org: 'แบบจำลองของเรา (SGP4 + Monte Carlo)', pub: r.el.epoch, t: fc.eta, w: (fc.win[2] - fc.win[0]) / 2 / 6e4, place: r.nom ? ll(r.nom.lat, r.nom.lon) : '', src: '', mine: true, note: `TLE ${thDate(r.el.epoch)}` });
+      (r.tips || []).slice(0, 4).forEach((x, i) => { let lon = +x.LON; if (lon > 180) lon -= 360; rows.push({ org: 'USSPACECOM TIP' + (i ? ' (ฉบับก่อน)' : ''), pub: utc(x.MSG_EPOCH), t: utc(x.DECAY_EPOCH), w: +x.WINDOW || 0, place: ll(+x.LAT, lon), src: 'https://www.space-track.org', srcName: 'Space-Track', tip: !i }); });
+      (st.preds[s.norad] || []).forEach(p => rows.push({ org: p.org, pub: p.published ? Date.parse(p.published) : null, t: Date.parse(p.time), w: p.window_min, place: (p.place || '') + (p.lat != null ? ` (${ll(p.lat, p.lon)}${p.approx ? ' โดยประมาณ' : ''})` : ''), src: p.src, srcName: p.srcName, note: p.note }));
+      const act = r.decayed;
+      const ref = act || (r.tipT || null), refName = act ? 'ของจริง (Decay)' : 'TIP ล่าสุด';
+      let x = `<h2>เทียบผลพยากรณ์ <small>${act ? `เทียบกับเวลาตกจริงตามประกาศ Decay: ${thDate(act)}` : 'ยังไม่มีประกาศ Decay — ตอนนี้เทียบกับ TIP ล่าสุดไปก่อน เมื่อมีของจริงระบบจะคำนวณความคลาดเคลื่อนให้เอง'}</small></h2>`;
+      x += `<table><tr><th>หน่วยงาน</th><th>ออกเมื่อ</th><th>คาดตก</th><th>±</th><th>ตำแหน่ง</th><th>ต่างจาก${refName}</th></tr>` + rows.map(o => {
+        const d = ref && o.t ? (o.t - ref) / 6e4 : null, inWin = act && o.t && Math.abs(o.t - act) <= o.w * 6e4;
+        return `<tr class="${o.mine ? 'hl' : ''}"><td>${o.src ? `<a href="${esc(o.src)}" target="_blank" rel="noopener" style="color:var(--blue)">${esc(o.org)}</a>` : `<b>${esc(o.org)}</b>`}${o.note ? `<br><small style="color:#8fa9c0">${esc(o.note)}</small>` : ''}</td><td>${o.pub ? thDate(o.pub) : '—'}</td><td>${o.t ? thDate(o.t) : '—'}</td><td>${o.w ? Math.round(o.w) + ' นาที' : '—'}</td><td>${esc(o.place || '—')}</td><td>${d == null || (o.tip && !act) ? '—' : `${d >= 0 ? '+' : ''}${Math.round(d)} นาที${act ? (inWin ? ' <span class="badge b-done">อยู่ในช่วง</span>' : ' <span class="badge b-likely">นอกช่วง</span>') : ''}`}</td></tr>`;
+      }).join('') + `</table><div class="note">เพิ่มผลพยากรณ์ของหน่วยงานอื่น (เช่น NARIT) ได้ที่ไฟล์ <code>multi/data/predictions_${s.norad}.json</code> · เวลาค่ากลางคลาด 1 นาที ≈ 470 กม. ตามแนวโคจร</div>`;
+      $('extra').innerHTML = x;
+    }
     drawMap(r, s); drawAlt(r);
   }
 
@@ -402,6 +419,8 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
       g += `<g><circle cx="${X(live.cur.lon)}" cy="${Y(live.cur.lat)}" r="9" fill="none" stroke="#ffd84a" stroke-width="2"><animate attributeName="r" values="7;13;7" dur="1.6s" repeatCount="indefinite"/></circle><circle cx="${X(live.cur.lon)}" cy="${Y(live.cur.lat)}" r="5" fill="#ffd84a" stroke="#071a2b" stroke-width="1.5"/><text x="${X(live.cur.lon) + 12}" y="${Y(live.cur.lat) + 4}" fill="#fff3c4" font-size="13" font-weight="700" paint-order="stroke" stroke="#071a2b" stroke-width="3">ตอนนี้ ${hhmm(Date.now())} น.</text></g>`;
     }
     st.live = live;
+    if (r.nom && !r.decayed) g += `<g><rect x="${X(r.nom.lon) - 6}" y="${Y(r.nom.lat) - 6}" width="12" height="12" transform="rotate(45 ${X(r.nom.lon)} ${Y(r.nom.lat)})" fill="#ff8a2a" stroke="#fff" stroke-width="1.5"/><text x="${X(r.nom.lon) + 10}" y="${Y(r.nom.lat) + 16}" fill="#ffd2a8" font-size="12" font-weight="700" paint-order="stroke" stroke="#071a2b" stroke-width="3">แบบจำลองเรา ${hhmm(r.nom.t)} น.</text></g>`;
+    (st.preds[s.norad] || []).filter(p => p.lat != null).forEach(p => { g += `<g><rect x="${X(p.lon) - 6}" y="${Y(p.lat) - 6}" width="12" height="12" fill="#b07cff" stroke="#fff" stroke-width="1.5"/><text x="${X(p.lon) + 10}" y="${Y(p.lat) - 8}" fill="#e2d0ff" font-size="12" font-weight="700" paint-order="stroke" stroke="#071a2b" stroke-width="3">${esc(p.org.split(' ')[0])} ${hhmm(Date.parse(p.time))} น.${p.approx ? ' (โดยประมาณ)' : ''}</text></g>`; });
     if (r.tip) g += `<g><circle cx="${X(r.tipLon)}" cy="${Y(r.tipLat)}" r="7" fill="#ff5a4a" stroke="#fff" stroke-width="2"/><text x="${X(r.tipLon) + 10}" y="${Y(r.tipLat) - 8}" fill="#ffd0c8" font-size="13" font-weight="700" paint-order="stroke" stroke="#071a2b" stroke-width="3">TIP ${hhmm(r.tipT)} น.</text></g>`;
     g += `</svg>`;
     $('map').innerHTML = g;
@@ -437,6 +456,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     const list = (tg.targets || []).map(t => +t.norad).filter(Boolean);
     st.sats = (await Promise.all(list.map(n => get(`data/sat_${n}.json`)))).map((s, i) => Object.assign({ norad: list[i], tle: [], tip: [], decay: [] }, s || {}, { norad: list[i], name: (tg.targets[i] || {}).name || (s && s.name), note: (tg.targets[i] || {}).note || '' }));
     st.events = {}; await Promise.all(st.sats.map(async s => { const ev = await get(`data/events_${s.norad}.json`); if (ev && ev.events) st.events[s.norad] = ev.events; }));
+    st.preds = {}; await Promise.all(st.sats.map(async s => { const pr = await get(`data/predictions_${s.norad}.json`); if (pr && pr.predictions) st.preds[s.norad] = pr.predictions; }));
     st.res = {};
     for (const s of st.sats) { try { st.res[s.norad] = Object.assign(analyse(s, 400), { runs: 400 }); } catch (e) { st.res[s.norad] = { err: String(e) }; } }
     if (!st.sel || !st.sats.some(s => s.norad === st.sel)) {

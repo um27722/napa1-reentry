@@ -111,6 +111,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
   function analyse(s, runs) {
     const els = prep(s); if (!els.length) return { err: 'ไม่มี TLE' };
     const el = els[els.length - 1], w = st.wx;
+    if (el.n < 6.4) return geoInfo(s, els, el);
     const hist = els.map(x => ({ epoch: x.epoch, a: x.a }));
     const fit = []; for (const h of hist.filter(h => h.epoch > el.epoch - 7 * 864e5 && h.epoch <= el.epoch)) { if (!fit.length || h.a <= fit[fit.length - 1].a + 0.3) fit.push(h); }
     const method = fit.length >= 3 && (fit[fit.length - 1].epoch - fit[0].epoch) > 1.5 * 864e5 ? 'history' : 'ndot';
@@ -133,8 +134,21 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     return out;
   }
 
+  // high / geostationary orbits: no re-entry forecast — report altitude, longitude and drift instead
+  function geoInfo(s, els, el) {
+    const sr = S.twoline2satrec(el.l1, el.l2), now = new Date();
+    const pos = d => { const pv = S.propagate(sr, d); if (!pv || !pv.position) return null; const g = S.eciToGeodetic(pv.position, S.gstime(d)); return { lat: S.degreesLat(g.latitude), lon: S.degreesLong(g.longitude), h: g.height }; };
+    const p = pos(now), p2 = pos(new Date(now.getTime() + 864e5));
+    let drift = p && p2 ? p2.lon - p.lon : null; if (drift != null) { if (drift > 180) drift -= 360; if (drift < -180) drift += 360; }
+    const mean = el.a - RE, dGeo = mean - 35786;
+    const prev = els.length > 1 ? els[0] : null;
+    return { geo: true, els, el, peri: el.perigee, apo: el.apogee, latMax: el.incl <= 90 ? el.incl : 180 - el.incl, incl: el.incl, now: p, drift, dGeo, mean,
+      tips: [], tip: null, decayed: (s.satcat && s.satcat.DECAY) ? utc(s.satcat.DECAY + ' 12:00') : null, firstMean: prev ? prev.a - RE : null };
+  }
+
   function status(r) {
     const now = Date.now();
+    if (r.geo) return r.dGeo > 200 ? ['b-done', 'อยู่วงโคจรสุสานแล้ว'] : Math.abs(r.drift || 0) > 0.05 ? ['b-crit', 'กำลังเคลื่อนออกจากตำแหน่ง'] : ['b-watch', 'วงโคจรค้างฟ้า · ไม่ตก'];
     if (r.decayed) return ['b-done', 'ตกแล้ว (ยืนยันทางการ)'];
     if (!r.fc || r.fc.error) return ['b-watch', 'ข้อมูลไม่พอ'];
     const end = Math.max(r.fc.win[2], r.tipT ? r.tipT + r.tipW : 0);
@@ -146,6 +160,13 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
   function cards() {
     $('cards').innerHTML = st.sats.map(s => {
       const r = st.res[s.norad] || {}, [cls, txt] = r.els ? status(r) : ['b-watch', '…'];
+      if (r.geo) return `<div class="card ${st.sel === s.norad ? 'sel' : ''}" data-n="${s.norad}">
+        <h3><span>${esc(s.name || s.norad)}</span><span class="badge ${cls}">${txt}</span></h3>
+        <div class="id">NORAD ${s.norad}${s.satcat && s.satcat.OBJECT_ID ? ' · ' + esc(s.satcat.OBJECT_ID) : ''}</div>
+        <div class="kv"><span>TLE ล่าสุด</span><b>${thDate(r.el.epoch)}</b>
+        <span>ตำแหน่ง</span><b>${r.now ? `${r.now.lon.toFixed(2)}°${r.now.lon >= 0 ? 'E' : 'W'}` : '—'}${r.drift != null ? ` · เลื่อน ${r.drift >= 0 ? '+' : ''}${r.drift.toFixed(3)}°/วัน` : ''}</b>
+        <span>ความสูงเฉลี่ย</span><b>${r.mean.toFixed(0)} กม. (${r.dGeo >= 0 ? '+' : ''}${r.dGeo.toFixed(0)} จาก GEO)</b>
+        <span>การตก</span><b>ไม่ตกสู่โลก (วงโคจรสูงมาก)</b></div></div>`;
       const eta = r.fc && !r.fc.error ? `${thDate(r.fc.eta)}` : '—';
       return `<div class="card ${st.sel === s.norad ? 'sel' : ''}" data-n="${s.norad}">
         <h3><span>${esc(s.name || s.satcat && s.satcat.OBJECT_NAME || s.norad)}</span><span class="badge ${cls}">${txt}</span></h3>
@@ -188,6 +209,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     if (r && r.fc && !r.fc.error && r.runs < 1000) { r = st.res[s.norad] = Object.assign(analyse(s, 1000), { runs: 1000 }); cards(); }
     const name = esc(s.name || s.norad), now = Date.now();
     if (!r || !r.el) { $('detail').innerHTML = `<h2>${name}</h2><div class="note">ยังไม่มีข้อมูล TLE — รอรอบอัปเดตถัดไป</div>`; return; }
+    if (r.geo) { renderGeo(s, r); return; }
     const fc = r.fc, [cls, txt] = status(r);
     let h = `<h2>${name} <small>NORAD ${s.norad}${s.note ? ' · ' + esc(s.note) : ''}</small> <span class="badge ${cls}">${txt}</span></h2>`;
     if (r.decayed) h += `<div class="warn" style="background:#0e3b2c;border-color:#1f6b4f;color:#bff3dc">USSPACECOM ยืนยันการกลับเข้าสู่ชั้นบรรยากาศ: ${thDate(r.decayed)}${r.decayRow && r.decayRow.MSG_EPOCH ? ' (ประกาศ ' + thDate(utc(r.decayRow.MSG_EPOCH)) + ')' : ''}</div>`;
@@ -226,6 +248,24 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     $('tip').innerHTML = `<h2>ประกาศ TIP <small>(Tracking and Impact Prediction · USSPACECOM)</small></h2>` + (r.tips && r.tips.length ? `<table><tr><th>ออกเมื่อ</th><th>คาดตก</th><th>±</th><th>ตำแหน่ง</th></tr>` + r.tips.slice(0, 8).map((x, i) => { let lon = +x.LON; if (lon > 180) lon -= 360; return `<tr class="${i ? '' : 'hl'}"><td>${thDate(utc(x.MSG_EPOCH))}</td><td>${thDate(utc(x.DECAY_EPOCH))}</td><td>${Math.round(+x.WINDOW || 0)} นาที</td><td>${(+x.LAT).toFixed(1)}°, ${lon.toFixed(1)}° (${esc(x.DIRECTION || '')})</td></tr>`; }).join('') + `</table><div class="note">ตำแหน่งใน TIP คือจุดบนแนวโคจรที่เวลาคาดตกค่ากลาง ไม่ใช่จุดตกแน่นอน</div>` : `<div class="note" style="margin-top:0">ยังไม่มี TIP สำหรับวัตถุนี้</div>`);
 
     drawMap(r, s); drawAlt(r);
+  }
+
+  function renderGeo(s, r) {
+    const [cls, txt] = status(r), name = esc(s.name || s.norad);
+    let h = `<h2>${name} <small>NORAD ${s.norad}${s.note ? ' · ' + esc(s.note) : ''}</small> <span class="badge ${cls}">${txt}</span></h2><div class="big">`;
+    h += `<div class="stat"><div class="l">ตำแหน่งเหนือเส้นศูนย์สูตร (ตอนนี้)</div><div class="v o">${r.now ? r.now.lon.toFixed(2) + '°' + (r.now.lon >= 0 ? 'E' : 'W') : '—'}</div><div class="s">ละติจูด ${r.now ? r.now.lat.toFixed(2) : '—'}° · คำนวณด้วย SGP4 จาก TLE ล่าสุด</div></div>`;
+    h += `<div class="stat"><div class="l">การเลื่อนตำแหน่ง</div><div class="v">${r.drift != null ? (r.drift >= 0 ? '+' : '') + r.drift.toFixed(3) + '°/วัน' : '—'}</div><div class="s">${Math.abs(r.drift || 0) > 0.05 ? 'กำลังเลื่อนออกจากตำแหน่งเดิม' : 'ยังคงอยู่ที่ตำแหน่งเดิม'}</div></div>`;
+    h += `<div class="stat"><div class="l">ความสูงเฉลี่ยเทียบวงโคจรค้างฟ้า (35,786 กม.)</div><div class="v">${r.dGeo >= 0 ? '+' : ''}${r.dGeo.toFixed(0)} กม.</div><div class="s">${r.peri.toFixed(0)} × ${r.apo.toFixed(0)} กม. · วงโคจรสุสานมาตรฐานคือสูงกว่า GEO ≥ ~235–300 กม.</div></div>`;
+    h += `<div class="stat"><div class="l">TLE ล่าสุด</div><div class="v">${thDate(r.el.epoch)}</div><div class="s">มุมเอียง ${r.incl.toFixed(3)}°</div></div></div>`;
+    h += `<div class="note">ดาวเทียมวงโคจรค้างฟ้าไม่ตกกลับสู่โลก เมื่อหมดอายุจะถูกยกขึ้นไปวงโคจรสุสาน ระบบนี้จึงติดตาม<b>ตำแหน่งและความสูง</b>แทนเวลาตก ถ้าความสูงเพิ่มขึ้นเกิน ~200 กม. จาก GEO หรือเริ่มเลื่อนตำแหน่งต่อเนื่อง แปลว่าเริ่มย้ายออกจากตำแหน่งแล้ว</div>`;
+    $('detail').innerHTML = h;
+    $('thai').innerHTML = `<h2>ประเทศไทย</h2><div class="note" style="margin-top:0">ไม่มีความเสี่ยงการตก (วงโคจรสูง ~36,000 กม.)</div>`;
+    $('tip').innerHTML = `<h2>ประกาศ TIP</h2><div class="note" style="margin-top:0">ไม่เกี่ยวข้องกับวงโคจรค้างฟ้า</div>`;
+    $('map').innerHTML = ''; $('mapNote').textContent = ''; $('mapTitle').textContent = 'แผนที่ (ใช้กับดาวเทียมที่ใกล้ตกเท่านั้น)';
+    // altitude history relative to GEO
+    const els = r.els.filter(e => e.epoch > r.el.epoch - 21 * 864e5);
+    $('alt').innerHTML = ''; 
+    $('tleTable').innerHTML = `<table><tr><th>TLE epoch</th><th>ความสูงเฉลี่ย − GEO</th><th>มุมเอียง</th></tr>` + els.slice(-8).reverse().map((e, i) => `<tr class="${i ? '' : 'hl'}"><td>${thDate(e.epoch)}</td><td>${(e.a - RE - 35786) >= 0 ? '+' : ''}${(e.a - RE - 35786).toFixed(1)} กม.</td><td>${e.incl.toFixed(3)}°</td></tr>`).join('') + `</table>`;
   }
 
   function drawMap(r, s) {
@@ -277,7 +317,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     st.res = {};
     for (const s of st.sats) { try { st.res[s.norad] = Object.assign(analyse(s, 400), { runs: 400 }); } catch (e) { st.res[s.norad] = { err: String(e) }; } }
     if (!st.sel || !st.sats.some(s => s.norad === st.sel)) {
-      const live = st.sats.filter(s => { const r = st.res[s.norad]; return r && r.els && !r.decayed && status(r)[0] !== 'b-likely'; });
+      const live = st.sats.filter(s => { const r = st.res[s.norad]; return r && r.els && !r.geo && !r.decayed && status(r)[0] !== 'b-likely'; });
       st.sel = (live[0] || st.sats[0] || {}).norad;
     }
     $('upd').textContent = `อัปเดตข้อมูล: ${stj && stj.lastRun ? thDate(Date.parse(stj.lastRun)) : '—'} · F10.7 ${wx.f107} · Kp ${wx.kp}`;

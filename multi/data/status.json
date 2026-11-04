@@ -1,8 +1,7 @@
 {
- "lastRun": "2026-11-04T04:20:23Z",
+ "lastRun": "2026-11-04T05:19:34Z",
  "notes": [
-  "CelesTrak 28485 error: <urlopen error timed out>",
-  "CelesTrak 46320 error: <urlopen error timed out>"
+  "CelesTrak 46320 error: HTTP Error 404: Not Found"
  ],
  "new": {
   "28485": 0,

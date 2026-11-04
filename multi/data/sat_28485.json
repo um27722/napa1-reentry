@@ -185,6 +185,22 @@
  "tip": [
   {
    "NORAD_CAT_ID": "28485",
+   "MSG_EPOCH": "2026-11-04 07:06:00",
+   "INSERT_EPOCH": "2026-11-04 07:16:35",
+   "DECAY_EPOCH": "2026-11-04 12:42:00",
+   "WINDOW": "60",
+   "REV": "20910",
+   "DIRECTION": "ascending",
+   "LAT": "6.1",
+   "LON": "91.8",
+   "INCL": "20.5",
+   "NEXT_REPORT": "2",
+   "ID": "67519",
+   "HIGH_INTEREST": "N",
+   "OBJECT_NUMBER": "28485"
+  },
+  {
+   "NORAD_CAT_ID": "28485",
    "MSG_EPOCH": "2026-11-04 00:25:00",
    "INSERT_EPOCH": "2026-11-04 00:36:21",
    "DECAY_EPOCH": "2026-11-04 12:42:00",
@@ -265,6 +281,21 @@
   }
  ],
  "decay": [
+  {
+   "NORAD_CAT_ID": "28485",
+   "OBJECT_NUMBER": "28485",
+   "OBJECT_NAME": "SWIFT",
+   "INTLDES": "2004-047A",
+   "OBJECT_ID": "2004-047A",
+   "RCS": "0",
+   "RCS_SIZE": "LARGE",
+   "COUNTRY": "US",
+   "MSG_EPOCH": "2026-11-04 07:06:00",
+   "DECAY_EPOCH": "2026-11-04 12:42:00",
+   "SOURCE": "TIP_msg",
+   "MSG_TYPE": "Prediction",
+   "PRECEDENCE": "3"
+  },
   {
    "NORAD_CAT_ID": "28485",
    "OBJECT_NUMBER": "28485",
@@ -449,5 +480,5 @@
  },
  "name": "Swift (NASA)",
  "note": "Neil Gehrels Swift Observatory · ~1.5 ตัน · เอียง 20.6°",
- "checked": "2026-11-04T07:07:03Z"
+ "checked": "2026-11-04T07:20:16Z"
 }

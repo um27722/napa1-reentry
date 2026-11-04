@@ -1,4 +1,4 @@
-# Space-Track gp_history 28485,46320, fetched 2026-11-04T05:19:34Z
+# Space-Track gp_history 28485,46320, fetched 2026-11-04T06:19:54Z
 # query: https://www.space-track.org/basicspacedata/query/class/gp_history/NORAD_CAT_ID/28485,46320/EPOCH/%3Enow-3/orderby/EPOCH%20asc/format/tle/emptyresult/show
 1 46320U 20061BA  26305.30216812  .05023970  23886-5  85894-3 0  9998
 2 46320  97.2143  26.8825 0008457 273.9376  86.0954 16.33020595343427

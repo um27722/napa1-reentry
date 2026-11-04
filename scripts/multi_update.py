@@ -97,6 +97,19 @@ if op:
             fh.write(f"# Space-Track gp_history {idlist}, fetched {iso(now)}\n# query: {q}\n" + raw)
     except Exception as e:
         notes.append(f"Space-Track gp_history error: {e}")
+    # one-time long history for targets that ask for it (e.g. GEO satellites: watch station-keeping / disposal)
+    for t in targets:
+        n, hd = int(t["norad"]), int(t.get("history_days") or 0)
+        if hd and not sats[n].get("backfilled_days", 0) >= hd:
+            try:
+                q = (f"https://www.space-track.org/basicspacedata/query/class/gp_history/NORAD_CAT_ID/{n}"
+                     f"/EPOCH/%3Enow-{hd}/orderby/EPOCH%20asc/format/tle/emptyresult/show")
+                for m, l1, l2 in parse_tle(get(q, 180, op)):
+                    if m == n:
+                        add(n, l1, l2, "Space-Track gp_history")
+                sats[n]["backfilled_days"] = hd
+            except Exception as e:
+                notes.append(f"Space-Track history {n} error: {e}")
     for cls in ("tip", "decay", "satcat"):
         try:
             if cls == "satcat":
@@ -154,8 +167,9 @@ except Exception as e:
 save("wx.json", wx)
 
 # ---------- save ----------
-keep = int((now - timedelta(days=21)).timestamp() * 1000)
+keep_days = {int(t["norad"]): int(t.get("keep_days") or 21) for t in targets}
 for n, s in sats.items():
+    keep = int((now - timedelta(days=keep_days.get(n, 21))).timestamp() * 1000)
     s["tle"] = sorted([x for x in s["tle"] if x["epoch"] >= keep] or s["tle"][-5:], key=lambda x: x["epoch"])
     s["checked"] = iso(now)
     save(f"sat_{n}.json", s)

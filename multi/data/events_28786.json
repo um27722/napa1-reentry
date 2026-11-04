@@ -1,0 +1,13 @@
+{
+ "_note": "ลำดับเหตุการณ์ไทยคม 4 — แก้ไข/เพิ่มได้ (date = วันที่แบบไทย, src = ลิงก์ที่มา)",
+ "events": [
+  {"date": "11 ส.ค. 2548", "text": "ส่งขึ้นสู่อวกาศ (COSPAR 2005-028A) ประจำตำแหน่ง 119.5°E", "src": "https://www.space-track.org", "srcName": "Space-Track SATCAT"},
+  {"date": "2565 → 2567", "text": "ขยายอายุทางวิศวกรรมครั้งที่ 1", "src": "https://spoc.rtaf.mi.th/blog/khaaw-wkaas-7/kaarpldrawaangdaawethiiymaithykhm-4-ipstar-143", "srcName": "ศปอว.ทอ."},
+  {"date": "20 มี.ค. 2567", "text": "ขยายอายุครั้งที่ 2 ถึงปลายปี 2568", "src": "https://spoc.rtaf.mi.th/blog/khaaw-wkaas-7/kaarpldrawaangdaawethiiymaithykhm-4-ipstar-143", "srcName": "ศปอว.ทอ."},
+  {"date": "21–22 เม.ย. 2569", "text": "กสทช. อนุญาตให้ใช้ Koreasat-7 (116°E) ให้บริการแทน 5 ปี", "src": "https://www.bangkokbiznews.com/tech/ai/1230767", "srcName": "กรุงเทพธุรกิจ"},
+  {"date": "10 พ.ค. 2569", "text": "กสทช. ขอ ITU ขยายการพักใช้ตำแหน่ง 119.5°E ถึง ก.ย. 2570 (ไทยคม 9 ล่าช้า)", "src": "https://www.pulse.bot/legal/news/nbtc-requests-longer-suspension-of-satellite-orbital-slot-035620f2-4f07-4712-8cda-9488cea3e825/", "srcName": "Bangkok Post"},
+  {"date": "30 มิ.ย. 2569", "text": "NT ปิดบริการอินเทอร์เน็ตผ่านไทยคม 4", "src": "https://www.nationthailand.com/business/tech/40066758", "srcName": "Nation Thailand"},
+  {"date": "31 ก.ค. 2569", "text": "กำหนดปลดระวางตามที่รายงาน กสทช.", "src": "https://spoc.rtaf.mi.th/blog/khaaw-wkaas-7/kaarpldrawaangdaawethiiymaithykhm-4-ipstar-143", "srcName": "ศปอว.ทอ.", "flag": "plan"},
+  {"date": "2570 (คาด)", "text": "ไทยคม 9 (Astranis MicroGEO) ส่งขึ้นทดแทน หลังเลื่อนจากปี 2568–2569", "src": "https://www.nationthailand.com/business/tech/40065358", "srcName": "Nation Thailand", "flag": "future"}
+ ]
+}

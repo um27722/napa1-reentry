@@ -67,11 +67,12 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
       <div class="panel"><h2 id="mapTitle">แผนที่จุดตกที่เป็นไปได้</h2><div id="map"></div>
         <div class="legend" id="mapLegend"><span><i style="background:#9ecae1"></i>ตกเร็ว</span><span><i style="background:#08519c;border:1px solid #9ecae1"></i>ตกช้า</span><span><i style="background:#ff5a4a"></i>จุดคาดตกตาม TIP (USSPACECOM)</span><span><i style="background:transparent;border:2px solid #ff8a2a"></i>ประเทศไทย (เส้นขอบแบบหยาบ)</span><span>เส้นประ = ขอบละติจูดที่วงโคจรผ่านได้</span></div>
         <div class="note" id="mapNote"></div></div>
+      <div class="panel" id="extra" style="display:none"></div>
     </div>
     <div>
       <div class="panel" id="thai"></div>
       <div class="panel" id="tip"></div>
-      <div class="panel"><h2>ความสูงวงโคจร <small>(จาก TLE)</small></h2><div id="alt"></div><div id="tleTable"></div></div>
+      <div class="panel"><h2 id="altTitle">ความสูงวงโคจร <small>(จาก TLE)</small></h2><div id="alt"></div><div id="tleTable"></div></div>
       <div class="panel"><h2>เพิ่มดาวเทียมที่ติดตาม</h2>
         <div class="note" style="margin-top:0">แก้ไฟล์ <code>multi/data/targets.json</code> ใน GitHub โดยเพิ่มบรรทัด <code>{"norad": 12345, "name": "ชื่อ"}</code> แล้วกด Commit ระบบจะดึง TLE, TIP และ Decay จาก Space-Track ให้ในรอบอัปเดตถัดไป (ทุก 30 นาที)<br>
         <a id="editLink" href="https://github.com/um27722/napa1-reentry/edit/main/multi/data/targets.json" target="_blank" rel="noopener" style="color:var(--blue)">เปิดไฟล์ targets.json เพื่อแก้ไข</a></div></div>
@@ -210,6 +211,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     const name = esc(s.name || s.norad), now = Date.now();
     if (!r || !r.el) { $('detail').innerHTML = `<h2>${name}</h2><div class="note">ยังไม่มีข้อมูล TLE — รอรอบอัปเดตถัดไป</div>`; return; }
     const lg = document.getElementById('mapLegend'); if (lg) lg.style.display = r && r.geo ? 'none' : '';
+    $('extra').style.display = r && r.geo ? '' : 'none'; $('altTitle').innerHTML = r && r.geo ? 'องค์ประกอบวงโคจร <small>(TLE ล่าสุดจาก Space-Track)</small>' : 'ความสูงวงโคจร <small>(จาก TLE)</small>';
     if (r.geo) { renderGeo(s, r); return; }
     const fc = r.fc, [cls, txt] = status(r);
     let h = `<h2>${name} <small>NORAD ${s.norad}${s.note ? ' · ' + esc(s.note) : ''}</small> <span class="badge ${cls}">${txt}</span></h2>`;
@@ -287,7 +289,10 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     const nsOff = incRate > 0.001;
     const stage = r.dGeo > 200 ? 4 : (Math.abs(r.drift || 0) > 0.05 || r.dGeo > 20) ? 3 : nsOff ? 2 : 1;
     const steps = [[1, 'ประจำตำแหน่ง ควบคุมเต็มรูปแบบ', 'คุมทั้งแนวตะวันออก–ตะวันตก และเหนือ–ใต้'], [2, 'ประจำตำแหน่ง ลดการควบคุม (ช่วงท้ายอายุ)', 'คุมเฉพาะตะวันออก–ตะวันตก ปล่อยมุมเอียงเพิ่มขึ้นเอง เพื่อประหยัดเชื้อเพลิง'], [3, 'ออกจากตำแหน่ง / กำลังยกวงโคจร', 'ตำแหน่งเริ่มเลื่อน หรือความสูงเพิ่มขึ้นจาก GEO'], [4, 'อยู่วงโคจรสุสาน', 'สูงกว่า GEO ≥ ~235–300 กม. ตามแนวปฏิบัติ IADC'], [5, 'ปิดระบบ (passivated)', 'ยืนยันได้จากประกาศของผู้ให้บริการเท่านั้น']];
+    const stageTxt = ['', 'ควบคุมวงโคจรเต็มรูปแบบ', 'ลดการควบคุมวงโคจร (ช่วงท้ายอายุ)', 'กำลังออกจากตำแหน่ง/ยกวงโคจร', 'อยู่วงโคจรสุสานแล้ว'][stage];
+    const bluf = `${esc(s.name || s.norad)} ${stage <= 2 ? `ยังประจำตำแหน่ง ${r.now ? r.now.lon.toFixed(2) + '°E' : ''}` : stageTxt} · ${last ? `จุดเครื่องคุมตำแหน่งครั้งล่าสุด ${thDate(last)}` : 'ไม่พบการจุดเครื่องในช่วงข้อมูล'} · ${r.dGeo > 200 ? 'อยู่สูงกว่า GEO ' + r.dGeo.toFixed(0) + ' กม.' : 'ยังไม่เริ่มย้ายไปวงโคจรสุสาน'} · ไม่มีความเสี่ยงตกสู่พื้นโลก`;
     let h = `<h2>${name} <small>NORAD ${s.norad}${s.note ? ' · ' + esc(s.note) : ''}</small> <span class="badge ${cls}">${txt}</span></h2>`;
+    h += `<div class="warn" style="background:#0f2a44;border-color:#2f5a78;color:#e6eef6;font-size:14px"><b>สรุป:</b> ${bluf}</div>`;
     h += `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px">` + steps.map(([k, t1, t2]) => `<div style="border-radius:8px;padding:8px;background:${k === stage ? '#3b2205' : '#0f2a44'};border:1px solid ${k === stage ? '#ff8a2a' : '#1f4262'}"><div style="font-size:11px;color:${k === stage ? '#ff8a2a' : '#8fa9c0'};font-weight:700">ขั้น ${k}${k === stage ? ' · ตอนนี้' : ''}</div><div style="font-size:12.5px;font-weight:700;margin:3px 0">${t1}</div><div style="font-size:11px;color:#8fa9c0">${t2}</div></div>`).join('') + `</div>`;
     h += `<div class="big">`;
     h += `<div class="stat"><div class="l">ตำแหน่งตอนนี้ (SGP4)</div><div class="v o">${r.now ? r.now.lon.toFixed(2) + '°E' : '—'}</div><div class="s">${rows.length} TLE ย้อนหลัง ${Math.round((rows[rows.length - 1].t - rows[0].t) / 864e5)} วัน อยู่ในช่วง ${lonMin.toFixed(2)}–${lonMax.toFixed(2)}°E</div></div>`;
@@ -296,16 +301,55 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     h += `<div class="stat"><div class="l">ความสูงเฉลี่ย − GEO</div><div class="v">${r.dGeo >= 0 ? '+' : ''}${r.dGeo.toFixed(1)} กม.</div><div class="s">ยังไม่เริ่มยกวงโคจร (เป้าหมายวงโคจรสุสาน ≥ +235–300 กม.)</div></div></div>`;
     h += `<div class="note">ดาวเทียมวงโคจรค้างฟ้าไม่ตกกลับสู่โลก ตัวชี้วัดการปลดระวางคือ (1) หยุดจุดเครื่องคุมตำแหน่ง (2) ความสูงเพิ่มขึ้นหลายสิบถึงหลายร้อยกิโลเมตรภายในไม่กี่วัน (3) ตำแหน่งเลื่อนออกจาก 119.5°E · ระบบตรวจจากการเปลี่ยนแปลงของ TLE โดยอัตโนมัติ</div>`;
     $('detail').innerHTML = h;
-    $('thai').innerHTML = `<h2>ประเทศไทย</h2><div class="note" style="margin-top:0">ไม่มีความเสี่ยงการตก (วงโคจรสูง ~36,000 กม.) · ตำแหน่งวงโคจร 119.5°E เป็นสิทธิของประเทศไทยผ่าน ITU</div>`;
-    $('tip').innerHTML = `<h2>ประกาศ TIP</h2><div class="note" style="margin-top:0">ไม่เกี่ยวข้องกับวงโคจรค้างฟ้า</div>`;
+    // --- view from Thailand (look angles)
+    const sr = S.twoline2satrec(r.el.l1, r.el.l2), dnow = new Date(), pv = S.propagate(sr, dnow);
+    const look = (la, lo) => { if (!pv || !pv.position) return null; const L = S.ecfToLookAngles({ latitude: la * Math.PI / 180, longitude: lo * Math.PI / 180, height: 0 }, S.eciToEcf(pv.position, S.gstime(dnow))); return { az: L.azimuth * 180 / Math.PI, el: L.elevation * 180 / Math.PI, rng: L.rangeSat }; };
+    const sites = [['กรุงเทพฯ', 13.75, 100.50], ['เชียงราย (เหนือสุด)', 20.4, 99.9], ['นราธิวาส (ใต้สุด)', 6.4, 101.8]];
+    $('thai').innerHTML = `<h2>มุมมองจากประเทศไทย <small>(คำนวณจากตำแหน่งปัจจุบัน)</small></h2><table><tr><th>จุดสังเกต</th><th>มุมทิศ (Az)</th><th>มุมเงย (El)</th><th>ระยะทาง</th></tr>` +
+      sites.map(([n, la, lo]) => { const L = look(la, lo); return `<tr><td>${n}</td><td>${L ? L.az.toFixed(1) + '°' : '—'}</td><td>${L ? L.el.toFixed(1) + '°' : '—'}</td><td>${L ? Math.round(L.rng).toLocaleString('en-US') + ' กม.' : '—'}</td></tr>`; }).join('') +
+      `</table><div class="note">ไม่มีความเสี่ยงการตก (สูง ~35,800 กม.) · ตำแหน่ง 119.5°E เป็นสิทธิของประเทศไทยที่จดทะเบียนกับ ITU ระหว่างรอไทยคม 9 ลูกค้าย้ายไปใช้ Koreasat-7 ที่ 116°E (ห่างไปทางตะวันตก 3.5°) · มุมเอียงที่เพิ่มขึ้นทำให้ดาวเทียมส่ายขึ้นลงวันละ ±${r.incl.toFixed(2)}° จานรับสัญญาณขนาดเล็กอาจต้องติดตามตำแหน่ง</div>`;
+    // --- disposal: technical requirements & watch thresholds
+    const vGeo = 3.0747, aGeo = 42164.2, dvPer100 = vGeo / 2 * (100 / aGeo) * 1000;
+    const dH = [235 + 1000 * 1.2 * 0.02, 235 + 1000 * 1.5 * 0.04], dv = dH.map(x => vGeo / 2 * (x / aGeo) * 1000);
+    const propPerTon = dv.map(x => 1000 * (1 - Math.exp(-x / (9.80665 * 300))));
+    const daysSinceBurn = last ? (now - last) / 864e5 : null;
+    const chk = (ok, warn) => ok ? `<span class="badge b-done">ปกติ</span>` : `<span class="badge b-crit">${warn}</span>`;
+    $('tip').innerHTML = `<h2>ถ้าจะปลดระวาง: เงื่อนไขทางเทคนิค</h2>
+      <table><tr><th>ตัวบ่งชี้ที่เฝ้าดู</th><th>ค่าตอนนี้</th><th>เกณฑ์</th><th></th></tr>
+      <tr><td>ความสูงเหนือ GEO</td><td>${r.dGeo >= 0 ? '+' : ''}${r.dGeo.toFixed(1)} กม.</td><td>&gt; +20 กม. = เริ่มยก</td><td>${chk(r.dGeo < 20, 'เริ่มยกวงโคจร')}</td></tr>
+      <tr><td>อัตราเลื่อนตำแหน่ง</td><td>${r.drift != null ? r.drift.toFixed(3) : '—'}°/วัน</td><td>&gt; ±0.05°/วัน</td><td>${chk(Math.abs(r.drift || 0) < 0.05, 'กำลังเลื่อน')}</td></tr>
+      <tr><td>วันนับจากการจุดเครื่องครั้งล่าสุด</td><td>${daysSinceBurn != null ? daysSinceBurn.toFixed(0) + ' วัน' : '—'}</td><td>&gt; 21 วัน (ปกติ 1–2 สัปดาห์/ครั้ง)</td><td>${chk(daysSinceBurn != null && daysSinceBurn < 21, 'หยุดคุมตำแหน่ง?')}</td></tr>
+      <tr><td>ระยะห่างจากตำแหน่ง 119.5°E</td><td>${r.now ? (r.now.lon - 119.5).toFixed(3) : '—'}°</td><td>กรอบคุมตำแหน่ง ±0.05°</td><td>${chk(r.now && Math.abs(r.now.lon - 119.5) < 0.05, 'นอกกรอบ')}</td></tr></table>
+      <div class="note"><b>วงโคจรสุสานตามแนวปฏิบัติ IADC:</b> ยกขึ้นเหนือ GEO อย่างน้อย ΔH = 235 กม. + 1,000·C<sub>R</sub>·A/m (A/m เป็น ม.²/กก.) และความรีไม่เกิน 0.003 · 235 กม. คือแถบป้องกัน GEO ±200 กม. บวกระยะเผื่อจากแรงรบกวนของดวงจันทร์ ดวงอาทิตย์ และแรงดันรังสี · สำหรับดาวเทียมขนาดใหญ่อย่างไทยคม 4 ΔH จะอยู่ราว <b>${dH[0].toFixed(0)}–${dH[1].toFixed(0)} กม.</b> (สมมติ C<sub>R</sub>·A/m ราว 0.024–0.06)</div>
+      <div class="note"><b>พลังงานที่ต้องใช้:</b> ยกวงโคจรวงกลมแบบ Hohmann ที่ GEO ต้องใช้ Δv ≈ ${dvPer100.toFixed(2)} m/s ต่อ 100 กม. รวม <b>≈ ${dv[0].toFixed(1)}–${dv[1].toFixed(1)} m/s</b> คิดเป็นเชื้อเพลิงราว ${propPerTon[0].toFixed(1)}–${propPerTon[1].toFixed(1)} กก. ต่อมวลดาวเทียม 1 ตัน (Isp 300 วินาที) · เชื้อเพลิงส่วนนี้ต้องกันไว้ ซึ่งเป็นเหตุหนึ่งที่ช่วงท้ายอายุมักหยุดคุมแนวเหนือ–ใต้ (ใช้ Δv ราว 40–50 m/s ต่อปี) เพื่อยืดอายุ · ปกติยกด้วยการจุดเครื่อง 2 ครั้งขึ้นไปในไม่กี่วันถึงไม่กี่สัปดาห์ แล้วระบายเชื้อเพลิงและตัดแบตเตอรี่ (passivation)</div>`;
+    // --- orbital elements & natural dynamics
+    const l2 = r.el.l2, argp = parseFloat(l2.substr(34, 8)), ma = parseFloat(l2.substr(43, 8)), per = 1440 / r.el.n, driftN = 360 * (r.el.n - 1.00273791);
+    const lonAcc = -0.00168 * Math.sin(2 * ((r.now ? r.now.lon : 119.5) - 75.1) * Math.PI / 180);
+    $('alt').innerHTML = `<table><tr><th>องค์ประกอบ</th><th>ค่า</th></tr>
+      <tr><td>Epoch</td><td>${thDate(r.el.epoch)}</td></tr>
+      <tr><td>Mean motion</td><td>${r.el.n.toFixed(8)} รอบ/วัน · คาบ ${per.toFixed(2)} นาที (วันดาราคติ 1436.07 นาที)</td></tr>
+      <tr><td>กึ่งแกนเอก a</td><td>${r.el.a.toFixed(1)} กม. (GEO 42,164.2 กม.)</td></tr>
+      <tr><td>ความรี e</td><td>${r.el.ecc.toFixed(7)}</td></tr>
+      <tr><td>มุมเอียง i</td><td>${r.el.incl.toFixed(4)}°</td></tr>
+      <tr><td>RAAN Ω</td><td>${r.el.raan.toFixed(4)}°</td></tr>
+      <tr><td>Argument of perigee ω</td><td>${argp.toFixed(4)}°</td></tr>
+      <tr><td>Mean anomaly M</td><td>${ma.toFixed(4)}°</td></tr>
+      <tr><td>อัตราเลื่อนจาก mean motion</td><td>${driftN >= 0 ? '+' : ''}${driftN.toFixed(4)}°/วัน (${driftN < 0 ? 'ไปทางตะวันตก' : 'ไปทางตะวันออก'})</td></tr></table>
+      <div class="note"><b>ถ้าหยุดคุมตำแหน่ง:</b> สนามโน้มถ่วงโลกที่ไม่กลมสมบูรณ์ (เทอม J<sub>22</sub>) ดึงดาวเทียมที่ ${r.now ? r.now.lon.toFixed(1) : '119.5'}°E ด้วยความเร่งตามลองจิจูดราว ${lonAcc.toFixed(4)}°/วัน² ไปหาจุดสมดุลเสถียรที่ 75°E ดาวเทียมจะค่อยๆ ลอยไปทางตะวันตก แล้วแกว่งรอบ 75°E ไปเรื่อยๆ นี่คือเหตุผลที่ต้องยกไปวงโคจรสุสาน ไม่ใช่แค่ปิดเครื่อง<br>
+      <b>มุมเอียง:</b> แรงโน้มถ่วงดวงจันทร์และดวงอาทิตย์ทำให้มุมเอียงเพิ่มเองราว 0.75–0.95°/ปี ค่าที่วัดได้ ${(incRate * 365).toFixed(2)}°/ปี ตรงกับกรณีไม่มีการคุมแนวเหนือ–ใต้ ถ้าปล่อยต่อไป มุมเอียงจะแกว่งขึ้นไปสูงสุดราว 15° ในรอบ ~53 ปี</div>`;
+    // --- timeline
+    const evs = (st.events[s.norad] || []);
+    $('extra').innerHTML = `<h2>ลำดับเหตุการณ์ <small>(ข่าว/ประกาศ เทียบกับข้อมูลวงโคจรจริง)</small></h2><table><tr><th style="width:120px">วันที่</th><th>เหตุการณ์</th><th style="width:130px">ที่มา</th></tr>` +
+      evs.map(e => `<tr${e.flag === 'plan' ? ' class="hl"' : ''}><td>${esc(e.date)}</td><td>${esc(e.text)}${e.flag === 'plan' ? ` <span class="badge b-crit">${stage <= 2 ? 'ข้อมูลวงโคจร: ยังไม่เกิดขึ้น' : 'กำลังดำเนินการ'}</span>` : ''}${e.flag === 'future' ? ' <span class="badge b-watch">อนาคต</span>' : ''}</td><td>${e.src ? `<a href="${esc(e.src)}" target="_blank" rel="noopener" style="color:var(--blue)">${esc(e.srcName || 'ที่มา')}</a>` : ''}</td></tr>`).join('') +
+      `<tr class="hl"><td>${thDate(r.el.epoch).split(' ').slice(0, 2).join(' ')} 2569</td><td><b>ข้อมูลวงโคจรล่าสุด:</b> ${stage <= 2 ? `ยังประจำตำแหน่ง ${r.now ? r.now.lon.toFixed(2) + '°E' : ''} · สูงกว่า GEO ${r.dGeo.toFixed(1)} กม. · จุดเครื่องคุมตำแหน่ง ${b30} ครั้งใน 30 วัน` : stageTxt}</td><td>Space-Track TLE</td></tr></table>
+      <div class="note">แก้ไขหรือเพิ่มเหตุการณ์ได้ที่ไฟล์ <code>multi/data/events_${s.norad}.json</code></div>`;
     $('mapTitle').textContent = `ประวัติวงโคจร ${s.name || s.norad} · ${rows.length} TLE จาก Space-Track`;
     const daily = []; { const by = {}; rows.forEach(x => { const k = Math.floor((x.t + 7 * 36e5) / 864e5); (by[k] = by[k] || []).push(x); }); Object.keys(by).sort((a, b) => a - b).forEach(k => { const g = by[k], m = f => g.reduce((q, x) => q + x[f], 0) / g.length; daily.push({ t: m('t'), lon: m('lon'), inc: m('inc'), da: m('da') }); }); }
     $('map').innerHTML = lineChart(daily, 'lon', { title: 'ตำแหน่ง (องศาตะวันออก, เฉลี่ยรายวัน) · ขีดส้ม = การจุดเครื่องคุมตำแหน่ง', dp: 2, refs: [{ v: 119.5, l: '119.5°E', c: '#8fa9c0' }], marks: burns }) +
       lineChart(daily, 'inc', { title: 'มุมเอียง (องศา) · เพิ่มขึ้นเรื่อยๆ = ไม่ได้คุมแนวเหนือ–ใต้', dp: 2, c: '#f2b134' }) +
       lineChart(daily, 'da', { title: 'ความสูงเฉลี่ยเทียบ GEO (กม.) · ถ้าเริ่มยกไปวงโคจรสุสาน เส้นนี้จะพุ่งขึ้น', dp: 1, c: '#3fd39a' });
     $('mapNote').textContent = 'ตำแหน่งคำนวณด้วย SGP4 ที่เวลา epoch ของ TLE แต่ละชุด · การจุดเครื่องตรวจจากการกระโดดของ mean motion ระหว่าง TLE ติดกัน (ค่าประมาณ)';
-    $('alt').innerHTML = '';
-    $('tleTable').innerHTML = `<table><tr><th>TLE epoch</th><th>ตำแหน่ง</th><th>ความสูง − GEO</th><th>มุมเอียง</th></tr>` + rows.slice(-8).reverse().map((e, i) => `<tr class="${i ? '' : 'hl'}"><td>${thDate(e.t)}</td><td>${e.lon.toFixed(3)}°E</td><td>${e.da >= 0 ? '+' : ''}${e.da.toFixed(1)} กม.</td><td>${e.inc.toFixed(3)}°</td></tr>`).join('') + `</table>`;
+    $('tleTable').innerHTML = `<h2 style="margin-top:12px">TLE ล่าสุด 8 ชุด</h2><table><tr><th>TLE epoch</th><th>ตำแหน่ง</th><th>ความสูง − GEO</th><th>มุมเอียง</th></tr>` + rows.slice(-8).reverse().map((e, i) => `<tr class="${i ? '' : 'hl'}"><td>${thDate(e.t)}</td><td>${e.lon.toFixed(3)}°E</td><td>${e.da >= 0 ? '+' : ''}${e.da.toFixed(1)} กม.</td><td>${e.inc.toFixed(3)}°</td></tr>`).join('') + `</table>`;
   }
 
   function drawMap(r, s) {
@@ -354,6 +398,7 @@ code{background:#0a2238;padding:1px 5px;border-radius:4px}
     st.wx = wx;
     const list = (tg.targets || []).map(t => +t.norad).filter(Boolean);
     st.sats = (await Promise.all(list.map(n => get(`data/sat_${n}.json`)))).map((s, i) => Object.assign({ norad: list[i], tle: [], tip: [], decay: [] }, s || {}, { norad: list[i], name: (tg.targets[i] || {}).name || (s && s.name), note: (tg.targets[i] || {}).note || '' }));
+    st.events = {}; await Promise.all(st.sats.map(async s => { const ev = await get(`data/events_${s.norad}.json`); if (ev && ev.events) st.events[s.norad] = ev.events; }));
     st.res = {};
     for (const s of st.sats) { try { st.res[s.norad] = Object.assign(analyse(s, 400), { runs: 400 }); } catch (e) { st.res[s.norad] = { err: String(e) }; } }
     if (!st.sel || !st.sats.some(s => s.norad === st.sel)) {

@@ -1,4 +1,4 @@
-# Space-Track gp_history 28485,46320,28786, fetched 2026-11-05T07:19:27Z
+# Space-Track gp_history 28485,46320,28786, fetched 2026-11-05T08:19:44Z
 # query: https://www.space-track.org/basicspacedata/query/class/gp_history/NORAD_CAT_ID/28485,46320,28786/EPOCH/%3Enow-3/orderby/EPOCH%20asc/format/tle/emptyresult/show
 1 28485U 04047A   26306.35814661  .02372947 -19301-4  94050-3 0  9997
 2 28485  20.5459 179.8193 0005527 299.5759  60.4146 16.22383624208757

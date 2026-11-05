@@ -3709,7 +3709,7 @@
   "LAUNCH": "2005-08-11",
   "DECAY": null,
   "PERIOD": "1436.08",
-  "INCLINATION": "0.60",
+  "INCLINATION": "0.61",
   "APOGEE": "35790",
   "PERIGEE": "35782",
   "RCS_SIZE": "LARGE",
@@ -3718,6 +3718,6 @@
  },
  "name": "Thaicom 4 (IPSTAR)",
  "note": "ดาวเทียมวงโคจรค้างฟ้า 119.5°E · ใกล้หมดอายุ · ติดตามการย้ายไปวงโคจรสุสาน",
- "checked": "2026-11-05T17:19:34Z",
+ "checked": "2026-11-05T17:36:56Z",
  "backfilled_days": 180
 }

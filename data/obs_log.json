@@ -132,18 +132,6 @@
    "frames": 0,
    "url": "https://network.satnogs.org/observations/15147982/"
   },
-  "15135613": {
-   "id": 15135613,
-   "start": "2026-10-06T12:04:46Z",
-   "end": "2026-10-06T12:07:47Z",
-   "station": "EA4TA",
-   "lat": 40.44,
-   "lng": -3.8,
-   "status": "good",
-   "max_alt": 16.0,
-   "frames": 9,
-   "url": "https://network.satnogs.org/observations/15135613/"
-  },
   "15259935": {
    "id": 15259935,
    "start": "2026-10-21T21:29:30Z",
@@ -170,5 +158,5 @@
   }
  },
  "v": 2,
- "updated": "2026-11-05T09:47:21Z"
+ "updated": "2026-11-05T17:56:48Z"
 }

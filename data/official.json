@@ -2,11 +2,17 @@
  "tip": [],
  "decay": [
   {
+   "MSG_EPOCH": "2026-11-05 17:21:42",
+   "DECAY_EPOCH": "2026-11-02 0:00:00",
+   "MSG_TYPE": "Historical",
+   "PRECEDENCE": "1"
+  },
+  {
    "MSG_EPOCH": "2026-11-04 17:29:00",
    "DECAY_EPOCH": "2026-11-02 0:00:00",
    "MSG_TYPE": "Historical",
    "PRECEDENCE": "2"
   }
  ],
- "checked": "2026-11-05T09:47:15Z"
+ "checked": "2026-11-05T17:56:41Z"
 }

@@ -163,6 +163,21 @@
    "RCS": "0",
    "RCS_SIZE": "MEDIUM",
    "COUNTRY": "THAI",
+   "MSG_EPOCH": "2026-11-05 17:21:42",
+   "DECAY_EPOCH": "2026-11-02 0:00:00",
+   "SOURCE": "satcat",
+   "MSG_TYPE": "Historical",
+   "PRECEDENCE": "1"
+  },
+  {
+   "NORAD_CAT_ID": "46320",
+   "OBJECT_NUMBER": "46320",
+   "OBJECT_NAME": "NAPA-1",
+   "INTLDES": "2020-061BA",
+   "OBJECT_ID": "2020-061BA",
+   "RCS": "0",
+   "RCS_SIZE": "MEDIUM",
+   "COUNTRY": "THAI",
    "MSG_EPOCH": "2026-11-04 17:29:00",
    "DECAY_EPOCH": "2026-11-02 0:00:00",
    "SOURCE": "decay_msg",
@@ -188,5 +203,5 @@
  },
  "name": "NAPA-1",
  "note": "ดาวเทียม 6U ของ ทอ. · คาดว่าตกแล้ว 2 พ.ย. 2569",
- "checked": "2026-11-05T17:36:56Z"
+ "checked": "2026-11-05T18:19:59Z"
 }

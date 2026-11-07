@@ -131,20 +131,8 @@
    "max_alt": 45.0,
    "frames": 0,
    "url": "https://network.satnogs.org/observations/15259935/"
-  },
-  "15159787": {
-   "id": 15159787,
-   "start": "2026-10-08T17:49:59Z",
-   "end": "2026-10-08T17:58:18Z",
-   "station": "ulook",
-   "lat": 13.0721,
-   "lng": 77.6053,
-   "status": "failed",
-   "max_alt": 32.0,
-   "frames": 0,
-   "url": "https://network.satnogs.org/observations/15159787/"
   }
  },
  "v": 2,
- "updated": "2026-11-07T16:15:56Z"
+ "updated": "2026-11-07T20:26:11Z"
 }

@@ -1,5 +1,5 @@
 {
- "lastRun": "2026-11-07T09:57:26Z",
- "note": "no new TLE; CelesTrak error: <urlopen error timed out>; Reddit error: HTTP Error 403: Blocked; SatNOGS obs fetched 75; SATCAT error: <urlopen error timed out>",
+ "lastRun": "2026-11-07T16:15:56Z",
+ "note": "no new TLE; CelesTrak error: HTTP Error 404: Not Found; Reddit error: HTTP Error 403: Blocked; SatNOGS obs fetched 75",
  "decay_date": "2026-11-02"
 }

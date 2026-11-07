@@ -120,18 +120,6 @@
    "frames": 0,
    "url": "https://network.satnogs.org/observations/15174464/"
   },
-  "15147982": {
-   "id": 15147982,
-   "start": "2026-10-08T10:49:46Z",
-   "end": "2026-10-08T10:53:01Z",
-   "station": "M0EYT",
-   "lat": 50.77,
-   "lng": -2.02,
-   "status": "good",
-   "max_alt": 16.0,
-   "frames": 0,
-   "url": "https://network.satnogs.org/observations/15147982/"
-  },
   "15259935": {
    "id": 15259935,
    "start": "2026-10-21T21:29:30Z",
@@ -158,5 +146,5 @@
   }
  },
  "v": 2,
- "updated": "2026-11-07T09:56:46Z"
+ "updated": "2026-11-07T16:15:56Z"
 }

@@ -658,10 +658,10 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
   const stat = { ok: false, count: 0, apsis: 0, status: null };
   async function loadStatic() {
     const get = async p => { try { const r = await fetch(p + '?t=' + Date.now(), { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch (e) { return null; } };
-    const [tle, aps, wx, status, runlog, news, official, gcon] = await Promise.all([get('data/tle.json'), get('data/apsis.json'), get('data/wx.json'), get('data/status.json'), get('data/runlog.json'), get('data/news.json'), get('data/official.json'), get('data/ground_contacts.json')]);
+    const [tle, aps, wx, status, runlog, news, official, gcon, fin] = await Promise.all([get('data/tle.json'), get('data/apsis.json'), get('data/wx.json'), get('data/status.json'), get('data/runlog.json'), get('data/news.json'), get('data/official.json'), get('data/ground_contacts.json'), get('data/final_forecast.json')]);
     stat.gc = gcon && Array.isArray(gcon.contacts) ? gcon.contacts.slice().sort((x, y) => Date.parse(y.time) - Date.parse(x.time)) : []; stat.runlog = Array.isArray(runlog) ? runlog : null; stat.news = news; stat.official = official;
     if (!tle && !aps && !wx) return;
-    stat.ok = true; stat.status = status;
+    stat.ok = true; stat.status = status; stat.fin = fin && fin.eta ? fin : null;
     if (status && status.decay_date && !st.decayed) { st.decayed = status.decay_date; log('SATCAT: DECAY_DATE ' + status.decay_date, 'จากไฟล์ข้อมูลที่อัปเดตอัตโนมัติ', 'crit'); }
     if (aps && Array.isArray(aps.rows)) { stat.apsis = aps.rows.length; addApsis(aps.rows, true); }
     if (wx) {
@@ -712,9 +712,21 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
     const b = briefData(); if (!b) { box.innerHTML = '<p>กำลังคำนวณ…</p>'; return; }
     const { fc, dLeft, prev, off, imp } = b, lines = [];
     let head, lvl;
-    if (st.decayed) { head = `NAPA-1 กลับเข้าสู่ชั้นบรรยากาศแล้ว (ยืนยันทางการ ${esc(st.decayed)})`; lvl = 'done'; }
+    const dTxt = (() => { const m = String(st.decayed || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${+m[3]} ${['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][+m[2] - 1]} ${+m[1] + 543}` : esc(st.decayed); })();
+    if (st.decayed) { head = `NAPA-1 กลับเข้าสู่ชั้นบรรยากาศแล้ว · USSPACECOM ยืนยันวันที่ ${dTxt}`; lvl = 'done'; }
     else if (fc.win[2] < Date.now()) { head = `NAPA-1 <b>น่าจะกลับเข้าสู่ชั้นบรรยากาศแล้ว</b> ประมาณ ${thDate(fc.eta)} · รอยืนยันจาก USSPACECOM`; lvl = 'crit'; }
     else { head = `NAPA-1 คาดว่าจะตกสู่ชั้นบรรยากาศ <b>${thDay(fc.eta)} ${partOfDay(fc.eta)}</b> (อีกประมาณ ${Math.max(0, dLeft).toFixed(1)} วัน)`; lvl = dLeft < 1 ? 'crit' : dLeft < 3 ? 'warn' : 'info'; }
+    if (st.decayed) {
+      lines.push(`<li><b>ประกาศทางการ:</b> USSPACECOM ออกประกาศ Decay ยืนยันวันตก ${dTxt} · ประกาศไม่ระบุเวลาและตำแหน่ง · ไม่มี TIP (ไม่ออกให้วัตถุขนาดเล็ก)</li>`);
+      lines.push(`<li><b>เวลาตกโดยประมาณ (แบบจำลอง):</b> ${thDate(fc.eta)} · ช่วง 90% ${thDate(fc.win[0])} – ${thDate(fc.win[2])} · จาก TLE ชุดสุดท้าย ${thDate(b.el.epoch)}</li>`);
+      lines.push(`<li><b>จุดตกโดยประมาณ (แบบจำลอง):</b> ${imp.nom ? `${Math.abs(imp.nom.lat).toFixed(1)}°${imp.nom.lat >= 0 ? 'N' : 'S'} ${Math.abs(imp.nom.lon).toFixed(1)}°${imp.nom.lon >= 0 ? 'E' : 'W'}` : '—'} เหนือแอนตาร์กติกาตะวันออก · ช่วง 90% พาดจากออสเตรเลียข้ามแอนตาร์กติกาถึงอเมริกาใต้ · ตกในประเทศไทย ${imp.n ? `${imp.inTH} จาก ${imp.n} กรณี` : '0'} · ดาวเทียม 6U คาดว่าเผาไหม้หมดในอากาศ</li>`);
+      const gM = stat.gc && stat.gc.length && stat.gc[0].result === 'no_signal' ? stat.gc[0] : null, gG = (stat.gc || []).filter(c => c.result !== 'no_signal');
+      if (gG.length) lines.push(`<li><b>สถานี ศปอว.ทอ.:</b> รับและถอดรหัสสัญญาณได้ครั้งสุดท้าย ${thDate(Date.parse(gG[0].time))} (FCS GOOD)</li>`);
+      if (gM) lines.push(`<li><b>สถานี ศปอว.ทอ.:</b> รอบผ่าน ${esc(gM.pass_name || '')} ${thDate(Date.parse(gM.time))} ไม่ได้รับสัญญาณ ทั้งที่สถานีปกติ — สอดคล้องกับการตก</li>`);
+      box.innerHTML = `<div class="brief-head ${lvl}">${head}</div><ul>${lines.join('')}</ul><div class="brief-foot">ตัวเลขตรึงตามผลพยากรณ์ฉบับสุดท้าย (2 พ.ย. 2569 16:10 น.) ซึ่งเป็นชุดเดียวกับรายงานและสไลด์บรรยายสรุป</div>`;
+      st.briefText = `[NAPA-1 สรุปสถานการณ์ ${thDate(Date.now())}]\n` + box.innerText.replace(/\n{2,}/g, '\n').trim() + `\n${location.href.split('#')[0]}`;
+      return;
+    }
     lines.push(`<li><b>เวลาที่น่าจะเป็น:</b> ${thDate(fc.eta)} · อาจคลาดได้ตั้งแต่ ${thDate(fc.win[0])} ถึง ${thDate(fc.win[2])}</li>`);
     if (fc.win[2] < Date.now()) lines.push(`<li><b>ตอนนี้:</b> เลยช่วงเวลาตกที่คาดการณ์แล้ว · ข้อมูลวงโคจรล่าสุดเมื่อ ${thDate(b.el.epoch)} (ขณะนั้นยังโคจรอยู่)</li>`); else lines.push(`<li><b>ตอนนี้:</b> สูงจากพื้นโลกประมาณ ${b.alt.toFixed(0)} km ${b.drop24 ? `ลดลงวันละประมาณ ${b.drop24.toFixed(1)} km` : ''} (ยิ่งต่ำยิ่งลดเร็วขึ้น) ข้อมูลวงโคจรล่าสุดเมื่อ ${thDate(b.el.epoch)}</li>`);
     if (prev && prev.run) {
@@ -832,6 +844,8 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
     let method = st.method;
     if (method === 'auto') method = hist.length >= 3 && (hist[hist.length - 1].epoch - hist[0].epoch) > 1.5 * 864e5 ? 'history' : 'ndot';
     st.fc = E.forecast(st.el, { f107: st.wx.f107, f81: st.wx.f81, kp: st.wx.kp, method, hist, TinfAt, runs: 1000, stopAlt: 120 });
+    // after official decay: freeze to the final briefing forecast (2 Nov 16:10) so numbers no longer drift with today's space weather
+    if (st.decayed && stat.fin && !st.fc.error && Math.abs(stat.fin.tle_epoch - st.el.epoch) < 6e4) st.fc = Object.assign({}, st.fc, { eta: stat.fin.eta, win: stat.fin.win, frozen: true });
     const fc = st.fc;
     if (!fc.error) {
       const key = 'lastEta.' + st.norad, prev = LS.get(key, null), cur = Math.round(fc.eta / 6e4);
@@ -1000,11 +1014,18 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
   function renderImpact() {
     const fc = st.fc, pm = st.pm, layer = $('impactLayer'); if (!layer) return;
     if (!fc || fc.error || !pm) { layer.innerHTML = ''; return; }
-    const el = st.el, n = fc.samples.length;
-    const pts = fc.samples.map((s, k) => ({ ...G.pointAt(S, pm, s.days, s.uInt), k }));
-    const nom = G.pointAt(S, pm, fc.nominalDays, fc.nominalUInt);
-    const nEnd = Math.pow(el.a / (E.RE + 120), 1.5);
-    const track = G.trackAround(S, pm, fc.nominalDays, fc.nominalUInt, nEnd, 95, 0, 1).map(p => [p.lon, p.lat]);
+    const el = st.el, F = fc.frozen ? stat.fin : null;
+    let pts, nom, track;
+    if (F) {
+      pts = F.mc.map((p, k) => ({ t: p[0], lat: p[1], lon: p[2], k })); nom = { t: F.p50.t, lat: F.p50.lat, lon: F.p50.lon };
+      track = F.track.map(p => [p[2], p[1]]);
+    } else {
+      pts = fc.samples.map((s, k) => ({ ...G.pointAt(S, pm, s.days, s.uInt), k }));
+      nom = G.pointAt(S, pm, fc.nominalDays, fc.nominalUInt);
+      const nEnd = Math.pow(el.a / (E.RE + 120), 1.5);
+      track = G.trackAround(S, pm, fc.nominalDays, fc.nominalUInt, nEnd, 95, 0, 1).map(p => [p.lon, p.lat]);
+    }
+    const n = pts.length;
     const inTH = pts.filter(p => p.lat > TH.s && p.lat < TH.n && p.lon > TH.w && p.lon < TH.e).length;
     const near = pts.filter(p => hav(p, st.gs) < 1000).length;
     // map
@@ -1026,7 +1047,7 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
     const pct = x => x === 0 ? '< ' + (100 / n).toFixed(1) + '%' : (x / n * 100).toFixed(1) + '%';
     $('ipNom').textContent = `${nom.lat.toFixed(2)}°, ${nom.lon.toFixed(2)}°`;
     $('ipNomLink').href = `https://www.google.com/maps/search/?api=1&query=${nom.lat.toFixed(4)},${nom.lon.toFixed(4)}`;
-    $('ipTime').textContent = fmt(nom.t) + ' · ' + (nom.ascending ? 'ขาขึ้น (north-bound)' : 'ขาลง (south-bound)');
+    $('ipTime').textContent = fmt(nom.t) + ' · ' + (F ? 'ค่าประมาณจากแบบจำลอง (ประกาศทางการไม่ระบุตำแหน่ง)' : nom.ascending ? 'ขาขึ้น (north-bound)' : 'ขาลง (south-bound)');
     $('ipUnc').textContent = `±${halfH.toFixed(0)} h ≈ ±${(halfH * 60 / P).toFixed(0)} รอบ ≈ ±${Math.round(halfH * 3600 * 7.8 / 1e4) * 1e4 >= 1e6 ? (halfH * 3600 * 7.8 / 1e6).toFixed(1) + ' ล้าน' : (Math.round(halfH * 3600 * 7.8 / 1000) * 1000).toLocaleString('en-US')} km`;
     $('ipTH').textContent = `${inTH} / ${n} · ${pct(inTH)}`;
     st.impact = { inTH, n, halfH, nom };

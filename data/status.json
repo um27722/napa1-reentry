@@ -1,5 +1,5 @@
 {
- "lastRun": "2026-11-07T23:53:14Z",
- "note": "no new TLE; CelesTrak error: HTTP Error 404: Not Found; Google News error: HTTP Error 503: Service Unavailable; Google News error: HTTP Error 503: Service Unavailable; Google News error: HTTP Error 503: Service Unavailable; Reddit error: HTTP Error 403: Blocked; SatNOGS obs fetched 75",
+ "lastRun": "2026-11-08T05:44:51Z",
+ "note": "no new TLE; CelesTrak error: <urlopen error timed out>; Reddit error: HTTP Error 403: Blocked; SatNOGS obs fetched 75; SATCAT error: <urlopen error timed out>",
  "decay_date": "2026-11-02"
 }

@@ -718,8 +718,8 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
     else { head = `NAPA-1 คาดว่าจะตกสู่ชั้นบรรยากาศ <b>${thDay(fc.eta)} ${partOfDay(fc.eta)}</b> (อีกประมาณ ${Math.max(0, dLeft).toFixed(1)} วัน)`; lvl = dLeft < 1 ? 'crit' : dLeft < 3 ? 'warn' : 'info'; }
     if (st.decayed) {
       lines.push(`<li><b>ประกาศทางการ:</b> USSPACECOM ออกประกาศ Decay ยืนยันวันตก ${dTxt} · ประกาศไม่ระบุเวลาและตำแหน่ง · ไม่มี TIP (ไม่ออกให้วัตถุขนาดเล็ก)</li>`);
-      lines.push(`<li><b>เวลาตกโดยประมาณ (แบบจำลอง):</b> ${thDate(fc.eta)} · ช่วง 90% ${thDate(fc.win[0])} – ${thDate(fc.win[2])} · จาก TLE ชุดสุดท้าย ${thDate(b.el.epoch)}</li>`);
-      lines.push(`<li><b>จุดตกโดยประมาณ (แบบจำลอง):</b> ${imp.nom ? `${Math.abs(imp.nom.lat).toFixed(1)}°${imp.nom.lat >= 0 ? 'N' : 'S'} ${Math.abs(imp.nom.lon).toFixed(1)}°${imp.nom.lon >= 0 ? 'E' : 'W'}` : '—'} เหนือแอนตาร์กติกาตะวันออก · ช่วง 90% พาดจากออสเตรเลียข้ามแอนตาร์กติกาถึงอเมริกาใต้ · ตกในประเทศไทย ${imp.n ? `${imp.inTH} จาก ${imp.n} กรณี` : '0'} · ดาวเทียม 6U คาดว่าเผาไหม้หมดในอากาศ</li>`);
+      lines.push(`<li><b>เวลาตกที่ประเมิน (ศปอว.ทอ.):</b> ${thDate(fc.eta)} · ช่วง 90% ${thDate(fc.win[0])} – ${thDate(fc.win[2])} · จาก TLE ชุดสุดท้าย ${thDate(b.el.epoch)}</li>`);
+      lines.push(`<li><b>จุดตกที่ประเมิน (ศปอว.ทอ.):</b> ${imp.nom ? `${Math.abs(imp.nom.lat).toFixed(1)}°${imp.nom.lat >= 0 ? 'N' : 'S'} ${Math.abs(imp.nom.lon).toFixed(1)}°${imp.nom.lon >= 0 ? 'E' : 'W'}` : '—'} เหนือแอนตาร์กติกาตะวันออก · ช่วง 90% พาดจากออสเตรเลียข้ามแอนตาร์กติกาถึงอเมริกาใต้ · ตกในประเทศไทย ${imp.n ? `${imp.inTH} จาก ${imp.n} กรณี` : '0'} · ดาวเทียม 6U คาดว่าเผาไหม้หมดในอากาศ</li>`);
       const gM = stat.gc && stat.gc.length && stat.gc[0].result === 'no_signal' ? stat.gc[0] : null, gG = (stat.gc || []).filter(c => c.result !== 'no_signal');
       if (gG.length) lines.push(`<li><b>สถานี ศปอว.ทอ.:</b> รับและถอดรหัสสัญญาณได้ครั้งสุดท้าย ${thDate(Date.parse(gG[0].time))} (FCS GOOD)</li>`);
       if (gM) lines.push(`<li><b>สถานี ศปอว.ทอ.:</b> รอบผ่าน ${esc(gM.pass_name || '')} ${thDate(Date.parse(gM.time))} ไม่ได้รับสัญญาณ ทั้งที่สถานีปกติ — สอดคล้องกับการตก</li>`);
@@ -988,7 +988,7 @@ textarea.tle.drop{border-color:#63dfed;background:#0f2b3d}
       h += `<circle cx="${gx}" cy="${gy}" r="8" fill="none" stroke="#d8b470" stroke-width="1.6"/><circle cx="${gx}" cy="${gy}" r="2.6" fill="#f3d198"/>`;
       const lx = Math.max(6, Math.min(sx - 110, 774)), ly = sy - 58;
       h += `<circle cx="${sx}" cy="${sy}" r="14" fill="#ff8f6b" opacity=".22"/><circle cx="${sx}" cy="${sy}" r="5" fill="#ffb08f" stroke="#fff" stroke-width="1.5"/>`;
-      h += `<rect x="${lx}" y="${ly}" width="220" height="40" rx="5" fill="#2a1d22" stroke="#8a4636"/><text x="${lx + 9}" y="${ly + 16}" font-size="10.5" fill="#ffc29f" font-weight="700">คาดเริ่มเผาไหม้เหนือแอนตาร์กติกา</text><text x="${lx + 9}" y="${ly + 31}" font-size="9" fill="#e0a890">2 พ.ย. 2569 · ${hm(F.eta)} น. · ${Math.abs(p.lat).toFixed(1)}°S ${p.lon.toFixed(1)}°E</text>`;
+      h += `<rect x="${lx}" y="${ly}" width="220" height="40" rx="5" fill="#2a1d22" stroke="#8a4636"/><text x="${lx + 9}" y="${ly + 16}" font-size="10.5" fill="#ffc29f" font-weight="700">จุดตกที่ประเมิน · แอนตาร์กติกาตะวันออก</text><text x="${lx + 9}" y="${ly + 31}" font-size="9" fill="#e0a890">2 พ.ย. 2569 · ${hm(F.eta)} น. · ${Math.abs(p.lat).toFixed(1)}°S ${p.lon.toFixed(1)}°E</text>`;
       $('trackLayer').innerHTML = `<g font-family="Inter,Arial,sans-serif">${h}</g>`;
       $('mapFoot').textContent = `ภาพนิ่ง ณ 2 พ.ย. 2569 · แนวโคจรช่วงสุดท้าย 100 นาทีก่อนตก · จุดเป็นค่าประมาณจากแบบจำลอง (ประกาศทางการระบุเพียงวันที่)`;
       return;

@@ -482,8 +482,11 @@ table.lt a{color:#7fe7ff}
     g += `<text x="14" y="${(T + B) / 2}" fill="#8fb0c8" font-size="13" transform="rotate(-90 14 ${(T + B) / 2})" text-anchor="middle">ความสูง (km)</text>`;
     // re-entry window band
     g += `<rect x="${x(fc.win[0])}" y="${T}" width="${x(fc.win[2]) - x(fc.win[0])}" height="${B - T}" fill="#ff8a2a" opacity=".13"/>`;
-    g += `<text x="${(x(fc.win[0]) + x(fc.win[2])) / 2}" y="${T + 14}" text-anchor="middle" fill="#ffb347" font-size="12.5" font-weight="700">ช่วงคาดว่าจะตก</text>`;
-    g += `<text x="${(x(fc.win[0]) + x(fc.win[2])) / 2}" y="${T + 29}" text-anchor="middle" fill="#ffcf9a" font-size="12">${thDayShort(fc.win[0])} – ${thDayShort(fc.win[2])}</text>`;
+    { const narrow = x(fc.win[2]) - x(fc.win[0]) < 120, ax = narrow ? Math.min(x(fc.win[2]), R) : (x(fc.win[0]) + x(fc.win[2])) / 2, an = narrow ? 'end' : 'middle';
+      const hm = t => new Date(t).toLocaleTimeString('th-TH', { ...tz, hour: '2-digit', minute: '2-digit', hour12: false });
+      const wtxt = thDayShort(fc.win[0]) === thDayShort(fc.win[2]) ? `${thDayShort(fc.win[0])} ${hm(fc.win[0])}–${hm(fc.win[2])} น.` : `${thDayShort(fc.win[0])} – ${thDayShort(fc.win[2])}`;
+      g += `<text x="${ax}" y="${T + 14}" text-anchor="${an}" fill="#ffb347" font-size="12.5" font-weight="700">ช่วงคาดว่าจะตก (90%)</text>`;
+      g += `<text x="${ax}" y="${T + 29}" text-anchor="${an}" fill="#ffcf9a" font-size="12">${wtxt}</text>`; }
     // 120 km line
     g += `<path d="M${L} ${y(120)}H${R}" stroke="#ff4d3d" stroke-width="1.6" stroke-dasharray="7 5"/><text x="${L + 6}" y="${y(120) - 6}" fill="#ff6a5a" font-size="14" font-weight="700">120 km</text>`;
     // phase thresholds
@@ -499,12 +502,12 @@ table.lt a{color:#7fe7ff}
     g += thin.map(h => `<circle cx="${x(h.epoch).toFixed(1)}" cy="${y(h.a - RE).toFixed(1)}" r="3.6" fill="#ff8a2a"/>`).join('');
     // today line + current point
     const an = st.alt || altNow(now);
-    g += `<path d="M${x(now)} ${T}V${B}" stroke="#7fe7ff" stroke-width="1.4"/><rect x="${x(now) - 30}" y="${B + 26}" width="60" height="18" rx="3" fill="#0b3350" stroke="#7fe7ff"/><text x="${x(now)}" y="${B + 39}" text-anchor="middle" fill="#7fe7ff" font-size="12" font-weight="700">วันนี้</text>`;
+    if (!st.decayed) g += `<path d="M${x(now)} ${T}V${B}" stroke="#7fe7ff" stroke-width="1.4"/><rect x="${x(now) - 30}" y="${B + 26}" width="60" height="18" rx="3" fill="#0b3350" stroke="#7fe7ff"/><text x="${x(now)}" y="${B + 39}" text-anchor="middle" fill="#7fe7ff" font-size="12" font-weight="700">วันนี้</text>`;
     if (!st.decayed) g += `<circle cx="${x(now)}" cy="${y(an)}" r="6" fill="none" stroke="#fff" class="pulse-ring"/><circle cx="${x(now)}" cy="${y(an)}" r="6.5" fill="#fff" stroke="#ff8a2a" stroke-width="3"/>`;
     if (!st.decayed) g += `<text x="${x(now) - 10}" y="${y(an) - 14}" text-anchor="end" fill="#fff" font-size="13" font-weight="700">${st.modelBelow ? 'แบบจำลอง: < 120 km' : 'ตอนนี้ ≈ ' + an.toFixed(0) + ' km'}</text>`;
     // ETA marker at 120 km
     g += `<g class="blink"><circle cx="${x(fc.eta)}" cy="${y(120)}" r="11" fill="none" stroke="#ff4d3d" stroke-width="2"/><circle cx="${x(fc.eta)}" cy="${y(120)}" r="6" fill="#ff4d3d"/></g>`;
-    g += `<text x="${x(fc.eta)}" y="${y(120) + 26}" text-anchor="middle" fill="#ff8a7a" font-size="12.5" font-weight="700">คาดตก ${thDate(fc.eta)}</text>`;
+    g += `<text x="${x(fc.eta) > R - 110 ? x(fc.eta) + 14 : x(fc.eta)}" y="${y(120) + 26}" text-anchor="${x(fc.eta) > R - 110 ? 'end' : 'middle'}" fill="#ff8a7a" font-size="12.5" font-weight="700">${st.decayed ? 'คาดเริ่มเผาไหม้ ' : 'คาดตก '}${thDate(fc.eta)}</text>`;
     $('chart').innerHTML = g;
   }
 
@@ -542,18 +545,23 @@ table.lt a{color:#7fe7ff}
 
   function renderFootprint() {
     const f = st.fin, ll = (la, lo) => `${Math.abs(la).toFixed(1)}°${la >= 0 ? 'N' : 'S'} ${Math.abs(lo).toFixed(1)}°${lo >= 0 ? 'E' : 'W'}`;
+    const hm = t => new Date(t).toLocaleTimeString('th-TH', { ...tz, hour: '2-digit', minute: '2-digit', hour12: false });
     const inW = t => t >= f.win[0] && t <= f.win[2];
-    let h = f.mc.filter((p, i) => i % 2 === 0).map(p => `<circle cx="${MX(p[2]).toFixed(1)}" cy="${MY(p[1]).toFixed(1)}" r="3" fill="#ff8a2a" opacity="${inW(p[0]) ? .7 : .25}"/>`).join('');
-    h += `<path d="${split(f.track.map(p => [p[2], p[1]]))}" fill="none" stroke="#ff8a2a" stroke-width="1.6" stroke-dasharray="8 6" opacity=".9"/>`;
+    let h = f.mc.filter((p, i) => i % 2 === 0).map(p => `<circle cx="${MX(p[2]).toFixed(1)}" cy="${MY(p[1]).toFixed(1)}" r="3" fill="#ff8a2a" opacity="${inW(p[0]) ? .7 : .22}"/>`).join('');
+    h += `<path d="${split(f.track.map(p => [p[2], p[1]]))}" fill="none" stroke="#ff8a2a" stroke-width="10" opacity=".16"/>`;
     h += `<rect x="${MX(TH.w)}" y="${MY(TH.n)}" width="${MX(TH.e) - MX(TH.w)}" height="${MY(TH.s) - MY(TH.n)}" fill="none" stroke="#ffd27a" stroke-width="2.4"/>`;
-    for (const k of ['P5', 'P95']) { const q = f.pts[k]; if (q) h += `<circle cx="${MX(q.lon)}" cy="${MY(q.lat)}" r="6" fill="#071a2b" stroke="#ffd9b0" stroke-width="2.5"/><text x="${MX(q.lon) + 10}" y="${MY(q.lat) - 8}" fill="#ffd9b0" font-size="15" font-weight="700" paint-order="stroke" stroke="#051a30" stroke-width="4">${k === 'P5' ? 'ตกเร็ว' : 'ตกช้า'} ${q.ict} น.</text>`; }
-    const p = f.p50, sx = MX(p.lon), sy = MY(p.lat), lx = Math.min(sx - 140, 700), ly = sy - 92;
-    h += `<circle cx="${sx}" cy="${sy}" r="9" fill="none" stroke="#ff4d3d" stroke-width="2" class="pulse-ring"/><circle cx="${sx}" cy="${sy}" r="9" fill="#ff4d3d" stroke="#fff" stroke-width="3"/>`;
-    h += `<rect x="${lx}" y="${ly}" width="300" height="56" rx="4" fill="#160b05e6" stroke="#ff8a2a" stroke-width="1.5"/><text x="${lx + 12}" y="${ly + 23}" fill="#ffb347" font-size="20" font-weight="700">จุดตกโดยประมาณ ${new Date(f.eta).toLocaleTimeString('th-TH', { ...tz, hour: '2-digit', minute: '2-digit', hour12: false })} น.</text><text x="${lx + 12}" y="${ly + 45}" fill="#ffd9b0" font-size="17">${ll(p.lat, p.lon)} · แอนตาร์กติกา</text>`;
+    // last orbit before re-entry (fixed — 2 Nov 2569)
+    const ft = f.final_track || [];
+    h += `<path d="${split(ft.map(p => [p[2], p[1]]))}" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-dasharray="9 6" opacity=".9"/>`;
+    ft.forEach((p, i) => { if (i % 20 === 0 && i < ft.length - 10) h += `<circle cx="${MX(p[2])}" cy="${MY(p[1])}" r="3.5" fill="#fff"/><text x="${MX(p[2]) + 8}" y="${MY(p[1]) + 5}" fill="#e6f2fb" font-size="14" font-weight="600" paint-order="stroke" stroke="#051a30" stroke-width="4">${hm(p[0])}</text>`; });
+    const p = f.p50, sx = MX(p.lon), sy = MY(p.lat), bw = 440, lx = Math.max(8, Math.min(sx - bw / 2, 1000 - bw - 8)), ly = sy - 110;
+    h += `<circle cx="${sx}" cy="${sy}" r="16" fill="#ff4d3d" opacity=".25"/><circle cx="${sx}" cy="${sy}" r="9" fill="#ff4d3d" stroke="#fff" stroke-width="3"/>`;
+    h += `<path d="M${sx} ${sy - 12}V${ly + 70}" stroke="#ff8a2a" stroke-width="1.5"/>`;
+    h += `<rect x="${lx}" y="${ly}" width="${bw}" height="70" rx="4" fill="#160b05ee" stroke="#ff8a2a" stroke-width="1.5"/><text x="${lx + 12}" y="${ly + 24}" fill="#ffb347" font-size="19" font-weight="700">ตำแหน่งที่คาดการณ์ว่าเริ่มตก / เริ่มเผาไหม้</text><text x="${lx + 12}" y="${ly + 46}" fill="#ffe2c4" font-size="17" font-weight="600">2 พ.ย. 2569 · ${hm(f.eta)} น. (ช่วง ${hm(f.win[0])}–${hm(f.win[2])} น.)</text><text x="${lx + 12}" y="${ly + 64}" fill="#ffd9b0" font-size="15">${ll(p.lat, p.lon)} · แอนตาร์กติกาตะวันออก ใต้ออสเตรเลีย</text>`;
     $('mapLayer').innerHTML = h;
-    $('mapTitle') && ($('mapTitle').innerHTML = 'RE-ENTRY FOOTPRINT <small>จุดตกโดยประมาณ</small>');
-    $('mapLegend') && ($('mapLegend').innerHTML = '<span><i style="background:#ff4d3d;border-radius:50%;width:10px;height:10px"></i>จุดตกค่ากลาง (แบบจำลอง)</span><span><i style="background:#ff8a2a"></i>จุดตกที่เป็นไปได้ 1,000 กรณี (จุดเข้ม = ช่วง 90%)</span><span><i style="background:#ffd27a;height:2px"></i>กรอบประเทศไทย</span>');
-    $('mapNote').textContent = `USSPACECOM ยืนยันวันตก ${st.decayTxt} แต่ไม่ระบุเวลาและตำแหน่ง (ไม่มี TIP สำหรับดาวเทียมขนาดเล็ก) · ตำแหน่งบนแผนที่เป็นค่าประมาณจากแบบจำลอง ใช้ TLE ${thDate(f.tle_epoch)} · ช่วง 90% ${thDate(f.win[0])} – ${thDate(f.win[2])} ซึ่งพาดจากออสเตรเลียข้ามแอนตาร์กติกาถึงอเมริกาใต้ · ตกในไทย 0 จาก ${f.runs} กรณี`;
+    $('mapTitle') && ($('mapTitle').innerHTML = 'GROUND TRACK · 2 พ.ย. 2569 <small>แนวโคจรช่วงสุดท้ายก่อนตก</small>');
+    $('mapLegend') && ($('mapLegend').innerHTML = `<span><i style="background:#ff4d3d;border-radius:50%;width:10px;height:10px"></i>ตำแหน่งที่คาดการณ์ว่าเริ่มตก (2 พ.ย. 69 ${hm(f.eta)} น.)</span><span><i style="background:#fff"></i>แนวโคจรช่วงสุดท้าย (100 นาทีก่อนตก)</span><span><i style="background:#ff8a2a"></i>จุดตกที่เป็นไปได้ (จุดเข้ม = ช่วง 90%)</span><span><i style="background:#ffd27a;height:2px"></i>กรอบประเทศไทย</span>`);
+    $('mapNote').textContent = `ภาพนิ่ง ณ 2 พ.ย. 2569 — ไม่ใช่ตำแหน่งปัจจุบัน · USSPACECOM ยืนยันวันตก ${st.decayTxt} แต่ไม่ระบุเวลาและตำแหน่ง · เวลาและจุดเป็นค่าประมาณจากแบบจำลอง ศปอว.ทอ. (TLE ${thDate(f.tle_epoch)}) · แนวสีส้มพาดจากออสเตรเลียข้ามแอนตาร์กติกาถึงอเมริกาใต้ · ตกในไทย 0 จาก ${f.runs} กรณี`;
     st.thPct = 0;
   }
 
